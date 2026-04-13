@@ -1,15 +1,18 @@
 %{
 #include "y.tab.h" 
+#include <string.h>
+#include <stdlib.h>
 %}
 
 LETTER      [a-zA-Z]
 DIGIT      [0-9]
 WHITESPACE  [ \t\n\r]+
 IDENTIFIER {LETTER}({LETTER}|{DIGIT}|_)*
-(-| )0+ | (-| )[1-9][0-9]* | [0x|0X] ([0-9|A-F])+
-INT_VAL  ([+-](0+))?(([+-])[1-9]{DIGIT}*)?([(0X)(0x)]({DIGIT}[A-F])+)   
+HEXDIGIT    [0-9a-fA-F]
+INT_VAL     0|[1-9]{DIGIT}*|0[xX]{HEXDIGIT}+
 REAL_VAL [+-]?{DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
-STR_VAL \"(.)*\"
+STR_VAL     \"[^\"]*\"
+COMMENT \/\%([^%]|%+[^/])*\%\/
 
 %%
 "bool"      { return BOOL; }
@@ -28,7 +31,7 @@ STR_VAL \"(.)*\"
 "func"      { return FUNC; }
 "proc"      { return PROC; }
 "return"    { return RETURN; }
-"null"      { return NULL; }
+"null"      { return NULL_PTR; }
 
 /*Boolean Literals*/
 "true"      { return TRUE_LITERAL; }
@@ -69,16 +72,16 @@ STR_VAL \"(.)*\"
     return ID; 
 }
 /*TYPES*/
-{STR_VAL}{
+{STR_VAL} {
     yylval.string_val = strdup(yytext + 1);
     yylval.string_val[strlen(yylval.string_val) - 1] = '\0'; 
     return STRING_LITERAL;
 }
-{INT_VAL}{
-    yylval = yytext;
+{INT_VAL} {
+    yylval.int_val = strtol(yytext, NULL, 0);
     return INT_LITERAL;
 }
-{REAL_VAL}{
+{REAL_VAL} {
     yylval.real_val = atof(yytext);
     return REAL_LITERAL;
 }
@@ -91,9 +94,9 @@ STR_VAL \"(.)*\"
 
 /*Whitespace & Error Handling*/
 {WHITESPACE}+  {}
-.           { printf("Lexical Error: Unknown character %s\n", yytext); }
+{COMMENT} {}
+.   { printf("Lexical Error: Unknown character %s\n", yytext); }
 
 
 %%
 
-#include <string.h>
