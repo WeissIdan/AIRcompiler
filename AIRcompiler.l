@@ -2,12 +2,21 @@
 #include "y.tab.h" 
 %}
 
+LETTER      [a-zA-Z]
+DIGIT      [0-9]
+WHITESPACE  [ \t\n\r]+
+IDENTIFIER {LETTER}({LETTER}|{DIGIT}|_)*
+(-| )0+ | (-| )[1-9][0-9]* | [0x|0X] ([0-9|A-F])+
+INT_VAL  ([+-](0+))?(([+-])[1-9]{DIGIT}*)?([(0X)(0x)]({DIGIT}[A-F])+)   
+REAL_VAL [+-]?{DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
+STR_VAL \"(.)*\"
+
 %%
 "bool"      { return BOOL; }
 "char"      { return CHAR; }
 "int"       { return INT; }
 "real"      { return REAL; }
-"string"    { return STRING; } 
+"string"    { return STRING_TYPE; } 
 "int*"      { return INT_PTR; }
 "char*"     { return CHAR_PTR; }
 "real*"     { return REAL_PTR; }
@@ -43,19 +52,48 @@
 "|"         { return LENGTH_OP; }
 
 /*Punctuation*/
-";"         { return .; }
-":"         { return .; }
-","         { return .; }
-"{"         { return .; }
-"}"         { return .; }
-"("         { return .; }
-")"         { return .; }
-"["         { return .; }
-"]"         { return .; }
+";"         { return ';'; }
+":"         { return ':'; }
+","         { return ','; }
+"{"         { return '{'; }
+"}"         { return '}'; }
+"("         { return '('; }
+")"         { return ')'; }
+"["         { return '['; }
+"]"         { return ']'; }
+
+/*COMPLEX RULES*/
+
+{IDENTIFIER} { 
+    yylval.string_val = strdup(yytext); 
+    return ID; 
+}
+/*TYPES*/
+{STR_VAL}{
+    yylval.string_val = strdup(yytext + 1);
+    yylval.string_val[strlen(yylval.string_val) - 1] = '\0'; 
+    return STRING_LITERAL;
+}
+{INT_VAL}{
+    yylval = yytext;
+    return INT_LITERAL;
+}
+{REAL_VAL}{
+    yylval.real_val = atof(yytext);
+    return REAL_LITERAL;
+}
+
+/*char*/
+\'.\' {
+    yylval.char_val = yytext[1]; 
+    return CHAR_LITERAL;
+}
 
 /*Whitespace & Error Handling*/
-[ \t\n\r]+  {}
+{WHITESPACE}+  {}
 .           { printf("Lexical Error: Unknown character %s\n", yytext); }
 
 
 %%
+
+#include <string.h>
