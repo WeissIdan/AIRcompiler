@@ -33,11 +33,11 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 "return"    { return RETURN; }
 "null"      { return NULL_PTR; }
 
-/*Boolean Literals*/
+ /*Boolean Literals*/
 "true"      { return TRUE_LITERAL; }
 "false"     { return FALSE_LITERAL; }
 
-/*Operators*/
+ /*Operators*/
 "+"         { return PLUS; }
 "-"         { return MINUS; }
 "*"         { return MULTIPLY; }
@@ -54,7 +54,7 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 "&"         { return ADDRESS_OF; }
 "|"         { return LENGTH_OP; }
 
-/*Punctuation*/
+ /*Punctuation*/
 ";"         { return ';'; }
 ":"         { return ':'; }
 ","         { return ','; }
@@ -65,13 +65,13 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 "["         { return '['; }
 "]"         { return ']'; }
 
-/*COMPLEX RULES*/
+ /*COMPLEX RULES*/
 
 {IDENTIFIER} { 
     yylval.string_val = strdup(yytext); 
     return ID; 
 }
-/*TYPES*/
+ /*TYPES*/
 {STR_VAL} {
     yylval.string_val = strdup(yytext + 1);
     yylval.string_val[strlen(yylval.string_val) - 1] = '\0'; 
@@ -86,13 +86,13 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
     return REAL_LITERAL;
 }
 
-/*char*/
+ /*char*/
 \'.\' {
     yylval.char_val = yytext[1]; 
     return CHAR_LITERAL;
 }
 
-/*Whitespace & Error Handling*/
+ /*Whitespace & Error Handling*/
 {WHITESPACE}+  {}
 {COMMENT} {}
 .   { printf("Lexical Error: Unknown character %s\n", yytext); }
@@ -100,3 +100,6 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 
 %%
 
+int yywrap() {
+    return 1;
+}
