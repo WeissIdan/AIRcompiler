@@ -32,9 +32,9 @@ funcs: func funcs { $$ = mknode("funcs", $1, $2); }
      | proc       { $$ = mknode("funcs", $1, NULL);};
 
 /* fix mknode */
-func: FUNC ID '(' arg_list ')' RETURN type '{' stmts '}'{ $$ = mknode("func", mknode("", $1, $2), mknode("", $4, $7)); };
-proc: PROC ID '(' arg_list ')' '{' stmts '}' { $$ = mknode("proc", mknode("", $1, $2), mknode("", $4, $7)); };
-arg_list: args ':' type; arg_list { $$ = mknode("arg_list", $1, $3); }
+func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $1, $2), mknode("", $4, $7)); };
+proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", $1, $2), mknode("", $4, $7)); };
+arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", $1, $3); }
         | args ':' type             { $$ = mknode("arg_list", $1, NULL); }
         |                  { $$ = NULL; };
 
@@ -51,19 +51,53 @@ type: INT         { $$ = mknode("int", NULL, NULL); }
     | CHAR_PTR    { $$ = mknode("char*", NULL, NULL); }
     | REAL_PTR    { $$ = mknode("real*", NULL, NULL); };
 
+type_literals: INT_LITERAL { $$ = mknode("int", NULL, NULL);}
+             | REAL_LITERAL { $$ = mknode("real_literal", NULL, NULL);}
+             | STRING_LITERAL { $$ = mknode("int", NULL, NULL);}
+             | CHAR_LITERAL { $$ = mknode("int", NULL, NULL);}
+             | TRUE_LITERAL { $$ = mknode("int", NULL, NULL);}
+             | FALSE_LITERAL { $$ = mknode("int", NULL, NULL);}
+
+
+var_definition: VAR args ':' type ';' {$$ = mknode("var_def", )};
+
+gen_stmts: var_definition gen_stmts {$$ = mknode("gen_statements", $1, $2)}
+         | stmts {$$ = $1};
+
 stmts: stmt stmts { $$ = mknode("stmts", $1, $2); }
      | stmt       { $$ = mknode("stmts", $1, NULL); };
 
 stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
+    | assign_stmt {$$ = $1;}
+    | while_stmt {$$ = $1;}
+    | for_stmt {$$ = $1}
     /* You will add while_stmt, assign_stmt, etc. here later */
     ;
 
 if_stmt: IF '(' expr ')' if_body { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
        | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", $3, mknode("", $5, $7)); };
 
+while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5)}
+          | WHILE '(' expr ')' '{' gen_statements '}' {$$ = mknode("while_stmt", $3, $6)};
+
+for_stmt: FOR '(' inits ';' expr ';' updates ')' for_body{ $$ = mknode("for", $3, mknode("", $5, mknode("", $7, $9)));};
+
+for_body: stmt          { $$ = $1; }
+        | '{' gen_statements '}' { $$ = $2; };
+
 if_body: stmt          { $$ = $1; }
-       | '{' stmts '}' { $$ = $2; };
+       | '{' gen_stmts '}' { $$ = $2; };
+
+assign_stmt: ID '=' expr ';' {$$ = mknode("assign_stmt", $1, $3);};
+
+expr: expr operator expr
+    | type_literals
+    | ID
+    | ID '(' args ')'
+
+
+
 
 %%
 #include "lex.yy.c"
