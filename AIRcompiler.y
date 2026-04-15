@@ -27,14 +27,15 @@ int yyerror(const char *s);
 
 program: funcs { printtree($1); };
 
-funcs: func funcs { $$ = mknode("funcs", $1, $2); }
-     | func       { $$ = mknode("funcs", $1, NULL); }
-     | proc       { $$ = mknode("funcs", $1, NULL);};
+funcs: func funcs { $$ = mknode("func", $1, $2); }
+     | proc funcs { $$ = mknode("proc", $1, $2); }
+     | func       { $$ = mknode("func", $1, NULL); }
+     | proc       { $$ = mknode("proc", $1, NULL);};
 
 /* fix mknode */
-func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $1, $2), mknode("", $4, $7)); };
-proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", $1, $2), mknode("", $4, $7)); };
-arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", $1, $3); }
+func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $7, $2), mknode("", $4, $9)); };
+proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", NULL, $2), mknode("", $4, $9)); };
+arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", mknode("", $1, $3), $5);}
         | args ':' type             { $$ = mknode("arg_list", $1, NULL); }
         |                  { $$ = NULL; };
 
@@ -51,18 +52,18 @@ type: INT         { $$ = mknode("int", NULL, NULL); }
     | CHAR_PTR    { $$ = mknode("char*", NULL, NULL); }
     | REAL_PTR    { $$ = mknode("real*", NULL, NULL); };
 
-type_literals: INT_LITERAL { $$ = mknode("int", NULL, NULL);}
-             | REAL_LITERAL { $$ = mknode("real_literal", NULL, NULL);}
-             | STRING_LITERAL { $$ = mknode("int", NULL, NULL);}
-             | CHAR_LITERAL { $$ = mknode("int", NULL, NULL);}
-             | TRUE_LITERAL { $$ = mknode("int", NULL, NULL);}
-             | FALSE_LITERAL { $$ = mknode("int", NULL, NULL);}
+type_literals: INT_LITERAL { $$ = mknode("int_lit", NULL, NULL);}
+             | REAL_LITERAL { $$ = mknode("real_lit", NULL, NULL);}
+             | STRING_LITERAL { $$ = mknode("string_lit", NULL, NULL);}
+             | CHAR_LITERAL { $$ = mknode("char_lit", NULL, NULL);}
+             | TRUE_LITERAL { $$ = mknode("true_lit", NULL, NULL);}
+             | FALSE_LITERAL { $$ = mknode("false_lit", NULL, NULL);}
 
 
-var_definition: VAR args ':' type ';' {$$ = mknode("var_def", )};
+var_definition: VAR args ':' type ';' {$$ = mknode("var_def", $2, $4);};
 
-gen_stmts: var_definition gen_stmts {$$ = mknode("gen_statements", $1, $2)}
-         | stmts {$$ = $1};
+gen_stmts: var_definition gen_stmts {$$ = mknode("gen_statements", $1, $2);}
+         | stmts {$$ = $1;};
 
 stmts: stmt stmts { $$ = mknode("stmts", $1, $2); }
      | stmt       { $$ = mknode("stmts", $1, NULL); };
@@ -71,31 +72,49 @@ stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
     | assign_stmt {$$ = $1;}
     | while_stmt {$$ = $1;}
-    | for_stmt {$$ = $1}
     /* You will add while_stmt, assign_stmt, etc. here later */
     ;
 
 if_stmt: IF '(' expr ')' if_body { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
        | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", $3, mknode("", $5, $7)); };
 
-while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5)}
-          | WHILE '(' expr ')' '{' gen_statements '}' {$$ = mknode("while_stmt", $3, $6)};
+while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5);}
+          | WHILE '(' expr ')' '{' gen_stmts '}' {$$ = mknode("while_stmt", $3, $6);};
 
 for_stmt: FOR '(' inits ';' expr ';' updates ')' for_body{ $$ = mknode("for", $3, mknode("", $5, mknode("", $7, $9)));};
 
 for_body: stmt          { $$ = $1; }
-        | '{' gen_statements '}' { $$ = $2; };
+        | '{' gen_stmts '}' { $$ = $2; };
 
 if_body: stmt          { $$ = $1; }
        | '{' gen_stmts '}' { $$ = $2; };
 
-assign_stmt: ID '=' expr ';' {$$ = mknode("assign_stmt", $1, $3);};
+assign_stmt: ID ASSIGN expr ';' {$$ = mknode("assign_stmt", $1, $3);};
 
-expr: expr operator expr
-    | type_literals
-    | ID
-    | ID '(' args ')'
+expr: expr PLUS expr       { $$ = mknode("+", $1, $3); }
+    | expr MINUS expr      { $$ = mknode("-", $1, $3); }
+    | expr MULTIPLY expr   { $$ = mknode("*", $1, $3); }
+    | expr DIVIDE expr     { $$ = mknode("/", $1, $3); }
+    | expr EQUAL expr      { $$ = mknode("==", $1, $3); }
+    | expr NOT_EQUAL expr  { $$ = mknode("!=", $1, $3); }
+    | expr GREATER expr    { $$ = mknode(">", $1, $3); }
+    | expr GREATER_EQUAL expr { $$ = mknode(">=", $1, $3); }
+    | expr LESS expr       { $$ = mknode("<", $1, $3); }
+    | expr LESS_EQUAL expr { $$ = mknode("<=", $1, $3); }
+    | NOT expr             { $$ = mknode("!", $2, NULL); }
+    | type_literals        { $$ = $1; }
+    | ID                   { $$ = $1; }
+    | ID '(' args ')'      { $$ = mknode("call", $1, $3); }
+    | '(' expr ')'         { $$ = $2; }
+    | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
+    | ADDRESS_OF expr      { $$ = mknode("&", $2, NULL); }
+    | LENGTH_OP expr LENGTH_OP { $$ = mknode("|length|", $2, NULL); }
+    | NULL_PTR             { $$ = mknode("null", NULL, NULL); };
 
+inits: assign_stmt { $$ = $1; }
+     | { $$ = NULL; };
+updates: ID ASSIGN expr { $$ = mknode("assign_stmt", $1, $3); } 
+       | { $$ = NULL; };
 
 
 
@@ -105,15 +124,30 @@ int main()
 {
     return yyparse();
 }
-void printtree(node *tree)
-{
-    printf("%s\n", tree->token);
-    if(tree->left)
+void printtree(node *tree) {
+    if (tree == NULL) return;
+    
+    int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
+
+    /* Only print an opening parenthesis if it's NOT a glue node AND it has children */
+    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
+        printf("(");
+    }
+    
+    /* Print the token if it has one and it's not empty */
+    if (!is_glue && tree->token != NULL) {
+        printf("%s ", tree->token);
+    }
+    
     printtree(tree->left);
-    if(tree->right)
     printtree(tree->right);
+    
+    /* Close the parenthesis */
+    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
+        printf(") ");
+    }
 }
-int yyerror()
+int yyerror(const char* s)
 {
     printf("MY ERROR\n");
     return 0;
