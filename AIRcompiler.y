@@ -28,7 +28,7 @@ int yyerror(const char *s);
 %%
 
 
-program: funcs { printtree($1); };
+program: funcs { printtree($1, 0); };
 
 funcs: func funcs { $$ = mknode("func", $1, $2); }
      | proc funcs { $$ = mknode("proc", $1, $2); }
@@ -127,28 +127,51 @@ int main()
 {
     return yyparse();
 }
-void printtree(node *tree) {
-    if (tree == NULL) return;
+// void printtree(node *tree) {
+//     // if (tree == NULL) return;
     
+//     // int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
+
+//     // /* Only print an opening parenthesis if it's NOT a glue node AND it has children */
+//     // if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
+//     //     printf("(");
+//     // }
+    
+//     // /* Print the token if it has one and it's not empty */
+//     // if (!is_glue && tree->token != NULL) {
+//     //     printf("%s ", tree->token);
+//     // }
+    
+//     // printtree(tree->left);
+//     // printtree(tree->right);
+//     // printf("\n");
+    
+//     // /* Close the parenthesis */
+//     // if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
+//     //     printf(") ");
+//     // }
+//     printtree(tree, 0);
+// }
+void printtree(node *tree, int depth) {
+    if (tree == NULL) return;
+
+    /* Check if it is an invisible glue node */
     int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
 
-    /* Only print an opening parenthesis if it's NOT a glue node AND it has children */
-    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
-        printf("(");
+    /* If it's a real node, print the directory-style branches */
+    if (!is_glue) {
+        for (int i = 0; i < depth; i++) {
+            printf("|   "); // Print the vertical lines for depth
+        }
+        printf("|-- %s\n", tree->token); // Print the actual token
     }
-    
-    /* Print the token if it has one and it's not empty */
-    if (!is_glue && tree->token != NULL) {
-        printf("%s ", tree->token);
-    }
-    
-    printtree(tree->left);
-    printtree(tree->right);
-    
-    /* Close the parenthesis */
-    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
-        printf(") ");
-    }
+
+    /* Increase depth only if it wasn't a glue node */
+    int next_depth = is_glue ? depth : depth + 1;
+
+    /* Visit left and right children */
+    printtree(tree->left, next_depth);
+    printtree(tree->right, next_depth);
 }
 int yyerror(const char* s)
 {

@@ -10,6 +10,6 @@ typedef struct node {
 
 /* Function Prototypes */
 node *mknode(char *token, node *left, node *right);
-void printtree(node *tree);
+void printtree(node *tree, int depth);
 
 #endif
