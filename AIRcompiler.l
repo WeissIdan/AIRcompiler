@@ -1,18 +1,20 @@
 %{
+#include "ast.h"
+#define YYSTYPE node*
 #include "y.tab.h" 
 #include <string.h>
 #include <stdlib.h>
 %}
 
 LETTER      [a-zA-Z]
-DIGIT      [0-9]
+DIGIT       [0-9]
 WHITESPACE  [ \t\n\r]+
-IDENTIFIER {LETTER}({LETTER}|{DIGIT}|_)*
+IDENTIFIER  {LETTER}({LETTER}|{DIGIT}|_)*
 HEXDIGIT    [0-9a-fA-F]
 INT_VAL     0|[1-9]{DIGIT}*|0[xX]{HEXDIGIT}+
-REAL_VAL [+-]?{DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
+REAL_VAL    [+-]?{DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
 STR_VAL     \"[^\"]*\"
-COMMENT \/\%([^%]|%+[^/])*\%\/
+COMMENT     \/\%([^%]|%+[^/])*\%\/
 
 %%
 "bool"      { return BOOL; }
@@ -65,30 +67,33 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 "["         { return '['; }
 "]"         { return ']'; }
 
- /*COMPLEX RULES*/
+ /*COMPLEX RULES - FIXED TO USE MKNODE!*/
 
 {IDENTIFIER} { 
-    yylval.string_val = strdup(yytext); 
+    yylval = mknode(yytext, NULL, NULL); 
     return ID; 
 }
+
  /*TYPES*/
 {STR_VAL} {
-    yylval.string_val = strdup(yytext + 1);
-    yylval.string_val[strlen(yylval.string_val) - 1] = '\0'; 
+    char *clean_str = strdup(yytext + 1);
+    clean_str[strlen(clean_str) - 1] = '\0';
+    yylval = mknode(clean_str, NULL, NULL);
+    free(clean_str);
     return STRING_LITERAL;
 }
 {INT_VAL} {
-    yylval.int_val = strtol(yytext, NULL, 0);
+    yylval = mknode(yytext, NULL, NULL);
     return INT_LITERAL;
 }
 {REAL_VAL} {
-    yylval.real_val = atof(yytext);
+    yylval = mknode(yytext, NULL, NULL);
     return REAL_LITERAL;
 }
 
  /*char*/
 \'.\' {
-    yylval.char_val = yytext[1]; 
+    yylval = mknode(yytext, NULL, NULL); 
     return CHAR_LITERAL;
 }
 
@@ -96,7 +101,6 @@ COMMENT \/\%([^%]|%+[^/])*\%\/
 {WHITESPACE}+  {}
 {COMMENT} {}
 .   { printf("Lexical Error: Unknown character %s\n", yytext); }
-
 
 %%
 

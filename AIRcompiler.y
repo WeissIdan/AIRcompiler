@@ -16,6 +16,9 @@ int yyerror(const char *s);
 %token EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL 
 %token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP
 
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
+
 %right ASSIGN 
 %left EQUAL NOT_EQUAL
 %left LESS LESS_EQUAL GREATER GREATER_EQUAL
@@ -34,7 +37,7 @@ funcs: func funcs { $$ = mknode("func", $1, $2); }
 
 /* fix mknode */
 func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $7, $2), mknode("", $4, $9)); };
-proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", NULL, $2), mknode("", $4, $9)); };
+proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", NULL, $2), mknode("", $4, $7)); };
 arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", mknode("", $1, $3), $5);}
         | args ':' type             { $$ = mknode("arg_list", $1, NULL); }
         |                  { $$ = NULL; };
@@ -75,7 +78,7 @@ stmt: if_stmt  { $$ = $1; }
     /* You will add while_stmt, assign_stmt, etc. here later */
     ;
 
-if_stmt: IF '(' expr ')' if_body { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
+if_stmt: IF '(' expr ')' if_body %prec LOWER_THAN_ELSE { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
        | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", $3, mknode("", $5, $7)); };
 
 while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5);}
@@ -153,15 +156,25 @@ int yyerror(const char* s)
     return 0;
 }
 node *mknode(char* token, node* left, node* right) {
-    node *newnode = (node*)malloc(sizeof(node));
-    if (token != NULL) {
-        newnode->token = strdup(token);
-    } else {
-        newnode->token = NULL;
-    }
+    node* newnode = (node*)malloc(sizeof(node));
+    char* newstr = (char*)malloc(sizeof(token) +1);
+    strcpy(newstr, token);
     newnode->left = left;
     newnode->right = right;
+    newnode->token = newstr;
     return newnode;
+
+
+
+    // node *newnode = (node*)malloc(sizeof(node));
+    // if (token != NULL) {
+    //     newnode->token = strdup(token);
+    // } else {
+    //     newnode->token = NULL;
+    // }
+    // newnode->left = left;
+    // newnode->right = right;
+    // return newnode;
 }
 
 
