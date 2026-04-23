@@ -12,7 +12,7 @@ WHITESPACE  [ \t\n\r]+
 IDENTIFIER  {LETTER}({LETTER}|{DIGIT}|_)*
 HEXDIGIT    [0-9a-fA-F]
 INT_VAL     0|[1-9]{DIGIT}*|0[xX]{HEXDIGIT}+
-REAL_VAL    [+-]?{DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
+REAL_VAL    {DIGIT}+(\.{DIGIT}+)?([eE][+-]?{DIGIT}+)?
 STR_VAL     \"[^\"]*\"
 COMMENT     \/\%([^%]|%+[^/])*\%\/
 

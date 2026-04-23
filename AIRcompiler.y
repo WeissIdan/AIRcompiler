@@ -16,6 +16,7 @@ int yyerror(const char *s);
 %token EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL 
 %token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP
 
+
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -25,6 +26,7 @@ int yyerror(const char *s);
 %left PLUS MINUS
 %left MULTIPLY DIVIDE
 %right NOT DEREFERENCE ADDRESS_OF LENGTH_OP
+%right UMINUS
 %%
 
 
@@ -112,7 +114,8 @@ expr: expr PLUS expr       { $$ = mknode("+", $1, $3); }
     | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
     | ADDRESS_OF expr      { $$ = mknode("&", $2, NULL); }
     | LENGTH_OP expr LENGTH_OP { $$ = mknode("|length|", $2, NULL); }
-    | NULL_PTR             { $$ = mknode("null", NULL, NULL); };
+    | NULL_PTR             { $$ = mknode("null", NULL, NULL); }
+    | MINUS expr %prec UMINUS { $$ = mknode("UMINUS", $2, NULL); }; 
 
 inits: assign_stmt { $$ = $1; }
      | { $$ = NULL; };
@@ -127,31 +130,7 @@ int main()
 {
     return yyparse();
 }
-// void printtree(node *tree) {
-//     // if (tree == NULL) return;
-    
-//     // int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
 
-//     // /* Only print an opening parenthesis if it's NOT a glue node AND it has children */
-//     // if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
-//     //     printf("(");
-//     // }
-    
-//     // /* Print the token if it has one and it's not empty */
-//     // if (!is_glue && tree->token != NULL) {
-//     //     printf("%s ", tree->token);
-//     // }
-    
-//     // printtree(tree->left);
-//     // printtree(tree->right);
-//     // printf("\n");
-    
-//     // /* Close the parenthesis */
-//     // if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
-//     //     printf(") ");
-//     // }
-//     printtree(tree, 0);
-// }
 void printtree(node *tree, int depth) {
     if (tree == NULL) return;
 
