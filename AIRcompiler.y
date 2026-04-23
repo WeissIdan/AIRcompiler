@@ -134,23 +134,31 @@ int main()
 void printtree(node *tree, int depth) {
     if (tree == NULL) return;
 
-    /* Check if it is an invisible glue node */
+    /* Check if it's an invisible glue node */
     int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
 
-    /* If it's a real node, print the directory-style branches */
     if (!is_glue) {
-        for (int i = 0; i < depth; i++) {
-            printf("|   "); // Print the vertical lines for depth
+        if (tree->left != NULL || tree->right != NULL) {
+            /* It's a parent node: Drop to a new line, indent, and open bracket */
+            printf("\n");
+            for (int i = 0; i < depth; i++) printf("  ");
+            printf("(%s", tree->token);
+        } else {
+            /* It's a leaf node (like 'x' or '5'): Print inline with a space */
+            printf(" %s", tree->token);
+            return; 
         }
-        printf("|-- %s\n", tree->token); // Print the actual token
     }
 
-    /* Increase depth only if it wasn't a glue node */
+    /* Recurse down the tree. Don't increase indent depth for invisible glue nodes! */
     int next_depth = is_glue ? depth : depth + 1;
-
-    /* Visit left and right children */
     printtree(tree->left, next_depth);
     printtree(tree->right, next_depth);
+
+    /* Close the bracket for parent nodes */
+    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
+        printf(")");
+    }
 }
 int yyerror(const char* s)
 {
