@@ -167,53 +167,47 @@ int main()
 {
     return yyparse();
 }
+/*=======================
+PRINT TREE WITH ONLY ()
+=========================*/
+// void printtree(node *tree, int depth) {
+//     if (tree == NULL) return;
 
-void printtree(node *tree, int depth) {
-    if (tree == NULL) return;
+//     int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
+//     int has_children = (tree->left != NULL || tree->right != NULL);
 
-    int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
-    int has_children = (tree->left != NULL || tree->right != NULL);
+//     int children_are_leaves = 1;
+//     if (tree->left != NULL && (tree->left->left != NULL || tree->left->right != NULL)) {
+//         children_are_leaves = 0; 
+//     }
+//     if (tree->right != NULL && (tree->right->left != NULL || tree->right->right != NULL)) {
+//         children_are_leaves = 0; 
 
-    /* --- NEW: Check if this is a "small" node (all children are leaves) --- */
-    int children_are_leaves = 1;
-    if (tree->left != NULL && (tree->left->left != NULL || tree->left->right != NULL)) {
-        children_are_leaves = 0; /* Left child has children of its own! */
-    }
-    if (tree->right != NULL && (tree->right->left != NULL || tree->right->right != NULL)) {
-        children_are_leaves = 0; /* Right child has children of its own! */
-    }
+//     if (!is_glue) {
+//         if (has_children) {
+//             printf("\n");
+//             for (int i = 0; i < depth; i++) printf("  ");
+//             printf("(%s", tree->token);
+//         } else {
+//             printf(" %s", tree->token);
+//             return; 
+//         }
+//     }
 
-    if (!is_glue) {
-        if (has_children) {
-            /* Parent node: Drop to a new line, indent, and open bracket */
-            printf("\n");
-            for (int i = 0; i < depth; i++) printf("  ");
-            printf("(%s", tree->token);
-        } else {
-            /* Leaf node: Print inline with a space */
-            printf(" %s", tree->token);
-            return; 
-        }
-    }
+//     int next_depth = is_glue ? depth : depth + 1;
+//     printtree(tree->left, next_depth);
+//     printtree(tree->right, next_depth);
 
-    /* Recurse down the tree */
-    int next_depth = is_glue ? depth : depth + 1;
-    printtree(tree->left, next_depth);
-    printtree(tree->right, next_depth);
-
-    /* --- UPDATED: Close the bracket --- */
-    if (!is_glue && has_children) {
-        if (children_are_leaves) {
-            /* Small node: Close it on the exact same line! */
-            printf(")"); 
-        } else {
-            /* Big node: Drop to a new line and match the indentation */
-            printf("\n");
-            for (int i = 0; i < depth; i++) printf("  ");
-            printf(")");
-        }
-    }
-}
+//     if (!is_glue && has_children) {
+//         if (children_are_leaves) {
+//             printf(")"); 
+//         } else {
+//             printf("\n");
+//             for (int i = 0; i < depth; i++) printf("  ");
+//             printf(")");
+//         }
+//     }
+// }
 int yyerror(const char* s)
 {
     printf("Syntax Error on line %d: %s at or near '%s'\n", yylineno, s, yytext);
@@ -229,4 +223,55 @@ node *mknode(char* token, node* left, node* right) {
     return newnode;
 }
 
+
+void printtree(node *tree, int depth) {
+    if (tree == NULL) return;
+
+    int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
+    int has_children = (tree->left != NULL || tree->right != NULL);
+
+    int children_are_leaves = 1;
+    if (tree->left != NULL && (tree->left->left != NULL || tree->left->right != NULL)) {
+        children_are_leaves = 0; 
+    }
+    if (tree->right != NULL && (tree->right->left != NULL || tree->right->right != NULL)) {
+        children_are_leaves = 0; 
+    }
+
+    char open_b = '(';
+    char close_b = ')';
+    
+    if (!is_glue && tree->token != NULL) {
+        if (strcmp(tree->token, "func") == 0 || strcmp(tree->token, "proc") == 0 ||
+            strcmp(tree->token, "funcs") == 0 || strcmp(tree->token, "procs") == 0) {
+            open_b = '{';
+            close_b = '}';
+        }
+    }
+
+    if (!is_glue) {
+        if (has_children) {
+            printf("\n");
+            for (int i = 0; i < depth; i++) printf("  ");
+            printf("%c%s", open_b, tree->token);
+        } else {
+            printf(" %s", tree->token);
+            return; 
+        }
+    }
+
+    int next_depth = is_glue ? depth : depth + 1;
+    printtree(tree->left, next_depth);
+    printtree(tree->right, next_depth);
+
+    if (!is_glue && has_children) {
+        if (children_are_leaves) {
+            printf("%c", close_b); 
+        } else {
+            printf("\n");
+            for (int i = 0; i < depth; i++) printf("  ");
+            printf("%c", close_b);
+        }
+    }
+}
 
