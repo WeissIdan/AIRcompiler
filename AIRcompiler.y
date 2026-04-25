@@ -70,7 +70,11 @@ type: INT         { $$ = mknode("int", NULL, NULL); }
     | REAL        { $$ = mknode("real", NULL, NULL); }
     | BOOL        { $$ = mknode("bool", NULL, NULL); }
     | CHAR        { $$ = mknode("char", NULL, NULL); }
-    | STRING_TYPE { $$ = mknode("string", NULL, NULL); }
+    | STRING_TYPE '[' INT_LITERAL ']'{   
+        char buffer[50];
+        sprintf(buffer, "string[%d]", $3);
+        $$ = mknode(buffer, NULL, NULL); 
+        }
     | INT_PTR     { $$ = mknode("int*", NULL, NULL); }
     | CHAR_PTR    { $$ = mknode("char*", NULL, NULL); }
     | REAL_PTR    { $$ = mknode("real*", NULL, NULL); };
@@ -106,9 +110,9 @@ stmts: stmt stmts { $$ = mknode("stmts", $1, $2); }
 stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
     | assign_stmt {$$ = $1;}
-    | while_stmt {$$ = $1;};
+    | while_stmt {$$ = $1;}
     | RETURN expr ';' { $$ = mknode("return", $2, NULL); }
-    | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); }
+    | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); };
 
 if_stmt: IF '(' expr ')' if_body %prec LOWER_THAN_ELSE { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
        | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", mknode("",$3,$5), mknode("else", $7, NULL)); };

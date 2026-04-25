@@ -1,4 +1,5 @@
 proc foo(x, y, z: int; f: real){
+    var s : string[20];
     if (x>y) {
         x = x + f;
     }
@@ -9,5 +10,5 @@ proc foo(x, y, z: int; f: real){
     }
 }
 func goo() return char{
-    return ‘a’;
+    return 'a';
 }
