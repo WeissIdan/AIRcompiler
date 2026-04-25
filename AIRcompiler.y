@@ -3,6 +3,10 @@
 #include<string.h>
 #include<stdlib.h>
 #include "ast.h"
+
+extern int yylineno; 
+extern char* yytext;
+
 int yylex();
 int yyerror(const char *s);
 %}
@@ -46,16 +50,16 @@ int yyerror(const char *s);
 
 program: funcs { printtree($1, 0); };
 
-funcs: func funcs { $$ = mknode("func", $1, $2); }
-     | proc funcs { $$ = mknode("proc", $1, $2); }
-     | func       { $$ = mknode("func", $1, NULL); }
-     | proc       { $$ = mknode("proc", $1, NULL);};
+funcs: func funcs { $$ = mknode("funcs", $1, $2); }
+     | proc funcs { $$ = mknode("procs", $1, $2); }
+     | func       { $$ = mknode("funcs", $1, NULL); }
+     | proc       { $$ = mknode("procs", $1, NULL);};
 
 /* fix mknode */
 func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $7, mknode($2, NULL, NULL)), mknode("", $4, $9)); };
 proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", NULL, mknode($2, NULL, NULL)), mknode("", $4, $7)); };
 arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", mknode("", $1, $3), $5);}
-        | args ':' type             { $$ = mknode("arg_list", $1, NULL); }
+        | args ':' type             { $$ = mknode("arg_list", $1, $3); }
         |                  { $$ = NULL; };
 
 
@@ -103,9 +107,11 @@ stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
     | assign_stmt {$$ = $1;}
     | while_stmt {$$ = $1;};
+    | RETURN expr ';' { $$ = mknode("return", $2, NULL); }
+    | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); }
 
 if_stmt: IF '(' expr ')' if_body %prec LOWER_THAN_ELSE { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
-       | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", $3, mknode("else", $5, $7)); };
+       | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", mknode("",$3,$5), mknode("else", $7, NULL)); };
 
 while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5);}
           | WHILE '(' expr ')' '{' gen_stmts '}' {$$ = mknode("while_stmt", $3, $6);};
@@ -188,7 +194,7 @@ void printtree(node *tree, int depth) {
 }
 int yyerror(const char* s)
 {
-    printf("MY ERROR\n");
+    printf("Syntax Error on line %d: %s at or near '%s'\n", yylineno, s, yytext);
     return 0;
 }
 node *mknode(char* token, node* left, node* right) {

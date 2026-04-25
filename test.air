@@ -1,27 +1,13 @@
-func calculate(x, y : int) return int {
-    var total : int;
-
-    total = x + y;
+proc foo(x, y, z: int; f: real){
+    if (x>y) {
+        x = x + f;
+    }
+    else {
+        y = x + y + z;
+        x = f*2;
+        z = f;
+    }
 }
-
-proc main() {
-    var count, limit : int;
-    var flag : bool;
-
-    count = 0;
-    limit = 10;
-    
-    while (count < limit) {
-        count = count + 1;
-    }
-
-    if (count == limit) {
-        flag = true;
-    } else {
-        flag = false;
-    }
-    
-    for ( ; count > 0 ; count = count - 1 ) {
-        limit = limit + 1;
-    }
+func goo() return char{
+    return ‘a’;
 }

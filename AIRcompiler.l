@@ -1,6 +1,6 @@
+%option yylineno
 %{
 #include "ast.h"
-#define YYSTYPE node*
 #include "y.tab.h" 
 #include <string.h>
 #include <stdlib.h>
