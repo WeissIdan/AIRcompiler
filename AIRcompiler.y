@@ -48,7 +48,7 @@ int yyerror(const char *s);
 %%
 
 
-program: funcs { printtree($1, 0); };
+program: funcs { printtree($1, 0); printf("\n");};
 
 funcs: func funcs { $$ = mknode("funcs", $1, $2); }
      | proc funcs { $$ = mknode("procs", $1, $2); }
@@ -70,6 +70,7 @@ type: INT         { $$ = mknode("int", NULL, NULL); }
     | REAL        { $$ = mknode("real", NULL, NULL); }
     | BOOL        { $$ = mknode("bool", NULL, NULL); }
     | CHAR        { $$ = mknode("char", NULL, NULL); }
+    | STRING_TYPE { $$ = mknode("string", NULL, NULL); }
     | STRING_TYPE '[' INT_LITERAL ']'{   
         char buffer[50];
         sprintf(buffer, "string[%d]", $3);
@@ -170,30 +171,47 @@ int main()
 void printtree(node *tree, int depth) {
     if (tree == NULL) return;
 
-    /* Check if it's an invisible glue node */
     int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
+    int has_children = (tree->left != NULL || tree->right != NULL);
+
+    /* --- NEW: Check if this is a "small" node (all children are leaves) --- */
+    int children_are_leaves = 1;
+    if (tree->left != NULL && (tree->left->left != NULL || tree->left->right != NULL)) {
+        children_are_leaves = 0; /* Left child has children of its own! */
+    }
+    if (tree->right != NULL && (tree->right->left != NULL || tree->right->right != NULL)) {
+        children_are_leaves = 0; /* Right child has children of its own! */
+    }
 
     if (!is_glue) {
-        if (tree->left != NULL || tree->right != NULL) {
-            /* It's a parent node: Drop to a new line, indent, and open bracket */
+        if (has_children) {
+            /* Parent node: Drop to a new line, indent, and open bracket */
             printf("\n");
             for (int i = 0; i < depth; i++) printf("  ");
             printf("(%s", tree->token);
         } else {
-            /* It's a leaf node (like 'x' or '5'): Print inline with a space */
+            /* Leaf node: Print inline with a space */
             printf(" %s", tree->token);
             return; 
         }
     }
 
-    /* Recurse down the tree. Don't increase indent depth for invisible glue nodes! */
+    /* Recurse down the tree */
     int next_depth = is_glue ? depth : depth + 1;
     printtree(tree->left, next_depth);
     printtree(tree->right, next_depth);
 
-    /* Close the bracket for parent nodes */
-    if (!is_glue && (tree->left != NULL || tree->right != NULL)) {
-        printf(")");
+    /* --- UPDATED: Close the bracket --- */
+    if (!is_glue && has_children) {
+        if (children_are_leaves) {
+            /* Small node: Close it on the exact same line! */
+            printf(")"); 
+        } else {
+            /* Big node: Drop to a new line and match the indentation */
+            printf("\n");
+            for (int i = 0; i < depth; i++) printf("  ");
+            printf(")");
+        }
     }
 }
 int yyerror(const char* s)

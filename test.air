@@ -1,14 +1,18 @@
 proc foo(x, y, z: int; f: real){
-    var s : string[20];
+    var s : string[50];
     if (x>y) {
+        s = 20;
+        s = "x greater then y";
         x = x + f;
     }
     else {
+        s = "y greater then x";
         y = x + y + z;
         x = f*2;
         z = f;
     }
+    
 }
-func goo() return char{
-    return 'a';
+func goo(s : string) return int{
+    return |s|;
 }
