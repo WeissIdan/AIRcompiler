@@ -70,32 +70,32 @@ COMMENT     \/\%([^%]|%+[^/])*\%\/
  /*COMPLEX RULES - FIXED TO USE MKNODE!*/
 
 {IDENTIFIER} { 
-    yylval = mknode(yytext, NULL, NULL); 
+    yylval.string_val = strdup(yytext); 
     return ID; 
 }
 
- /*TYPES*/
 {STR_VAL} {
     char *clean_str = strdup(yytext + 1);
     clean_str[strlen(clean_str) - 1] = '\0';
-    yylval = mknode(clean_str, NULL, NULL);
-    free(clean_str);
+    yylval.string_val = clean_str;
     return STRING_LITERAL;
 }
+
 {INT_VAL} {
-    yylval = mknode(yytext, NULL, NULL);
+    yylval.int_val = atoi(yytext);
     return INT_LITERAL;
 }
+
 {REAL_VAL} {
-    yylval = mknode(yytext, NULL, NULL);
+    yylval.real_val = atof(yytext);
     return REAL_LITERAL;
 }
-
  /*char*/
 \'.\' {
-    yylval = mknode(yytext, NULL, NULL); 
+    yylval.char_val = yytext[1]; 
     return CHAR_LITERAL;
 }
+
 
  /*Whitespace & Error Handling*/
 {WHITESPACE}+  {}
