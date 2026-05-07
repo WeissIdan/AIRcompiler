@@ -66,6 +66,11 @@ arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", mknode("", $1, $3
 args: ID ',' args { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
     | ID { $$ = mknode("arg", mknode($1, NULL, NULL), NULL);};
 
+args_literals: ID ',' args_literals { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
+    | ID { $$ = mknode("arg", mknode($1, NULL, NULL), NULL);}
+    | type_literals { $$ = mknode("literal",$1, NULL);}
+    | type_literals ',' args_literals { $$ = mknode("literal", $1 ,$3); };
+
 type: INT         { $$ = mknode("int", NULL, NULL); }
     | REAL        { $$ = mknode("real", NULL, NULL); }
     | BOOL        { $$ = mknode("bool", NULL, NULL); }
@@ -103,6 +108,7 @@ type_literals: INT_LITERAL {
 var_definition: VAR args ':' type ';' {$$ = mknode("var_def", $2, $4);};
 
 gen_stmts: var_definition gen_stmts {$$ = mknode("gen_statements", $1, $2);}
+         | funcs
          | stmts {$$ = $1;};
 
 stmts: stmt stmts { $$ = mknode("stmts", $1, $2); }
@@ -121,7 +127,7 @@ if_stmt: IF '(' expr ')' if_body %prec LOWER_THAN_ELSE { $$ = mknode("if_stmt", 
 while_stmt: WHILE '(' expr ')' stmt {$$ = mknode("while_stmt", $3, $5);}
           | WHILE '(' expr ')' '{' gen_stmts '}' {$$ = mknode("while_stmt", $3, $6);};
 
-for_stmt: FOR '(' inits ';' expr ';' updates ')' for_body{ $$ = mknode("for", $3, mknode("", $5, mknode("", $7, $9)));};
+for_stmt: FOR '(' inits expr ';' updates ')' for_body{ $$ = mknode("for", $3, mknode("", $4, mknode("", $6, $8)));};
 
 for_body: stmt          { $$ = $1; }
         | '{' gen_stmts '}' { $$ = $2; };
@@ -147,7 +153,7 @@ expr: expr PLUS expr       { $$ = mknode("+", $1, $3); }
     | NOT expr             { $$ = mknode("!", $2, NULL); }
     | type_literals        { $$ = $1; }
     | ID                   { $$ = mknode($1, NULL, NULL); }
-    | ID '(' args ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' args_literals ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
     | '(' expr ')'         { $$ = $2; }
     | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
     | ADDRESS_OF expr      { $$ = mknode("&", $2, NULL); }
@@ -167,47 +173,7 @@ int main()
 {
     return yyparse();
 }
-/*=======================
-PRINT TREE WITH ONLY ()
-=========================*/
-// void printtree(node *tree, int depth) {
-//     if (tree == NULL) return;
 
-//     int is_glue = (tree->token != NULL && strcmp(tree->token, "") == 0);
-//     int has_children = (tree->left != NULL || tree->right != NULL);
-
-//     int children_are_leaves = 1;
-//     if (tree->left != NULL && (tree->left->left != NULL || tree->left->right != NULL)) {
-//         children_are_leaves = 0; 
-//     }
-//     if (tree->right != NULL && (tree->right->left != NULL || tree->right->right != NULL)) {
-//         children_are_leaves = 0; 
-
-//     if (!is_glue) {
-//         if (has_children) {
-//             printf("\n");
-//             for (int i = 0; i < depth; i++) printf("  ");
-//             printf("(%s", tree->token);
-//         } else {
-//             printf(" %s", tree->token);
-//             return; 
-//         }
-//     }
-
-//     int next_depth = is_glue ? depth : depth + 1;
-//     printtree(tree->left, next_depth);
-//     printtree(tree->right, next_depth);
-
-//     if (!is_glue && has_children) {
-//         if (children_are_leaves) {
-//             printf(")"); 
-//         } else {
-//             printf("\n");
-//             for (int i = 0; i < depth; i++) printf("  ");
-//             printf(")");
-//         }
-//     }
-// }
 int yyerror(const char* s)
 {
     printf("Syntax Error on line %d: %s at or near '%s'\n", yylineno, s, yytext);

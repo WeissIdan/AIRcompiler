@@ -1,0 +1,19 @@
+func f2 (a1,a2:int;b5:bool) return int
+
+{
+
+var a3,a4:int;
+
+if(a1==a2)
+
+a3=a1*a2;
+
+else
+
+b5=true;
+
+a4=a3;
+
+return a4;
+
+}

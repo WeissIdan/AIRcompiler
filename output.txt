@@ -1,0 +1,37 @@
+
+{funcs
+  {func int f2
+    (arg_list
+      (arg a1
+        (arg a2)
+      ) int
+      (arg_list
+        (arg b5) bool
+      )
+    )
+    (gen_statements
+      (var_def
+        (arg a3
+          (arg a4)
+        ) int
+      )
+      (stmts
+        (if_stmt
+          (== a1 a2)
+          (assign_stmt a3
+            (* a1 a2)
+          )
+          (else
+            (assign_stmt b5 true)
+          )
+        )
+        (stmts
+          (assign_stmt a4 a3)
+          (stmts
+            (return a4)
+          )
+        )
+      )
+    )
+  }
+}
