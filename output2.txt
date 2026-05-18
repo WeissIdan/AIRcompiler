@@ -1,0 +1,89 @@
+Starting Compilation...
+
+(CODE
+  {procs
+    {proc Main
+      (gen_statements
+        (decls
+          {func int niggaedhbfdgdsman
+            (gen_statements
+              (var_def
+                (arg a1
+                  (arg a2)
+                ) int
+              )
+              (stmts
+                (assign_stmt a1 5)
+                (stmts
+                  (assign_stmt a2 4)
+                  (stmts
+                    (return 3)
+                  )
+                )
+              )
+            )
+          }
+          (decls
+            {proc niggaman
+              (gen_statements
+                (var_def
+                  (arg a1
+                    (arg a2)
+                  ) int
+                )
+                (stmts
+                  (assign_stmt a1 5)
+                  (stmts
+                    (assign_stmt a2 4)
+                  )
+                )
+              )
+            }
+            (var_def
+              (arg a3
+                (arg a4)
+              ) int
+            )
+          )
+        )
+        (stmts
+          (if_stmt
+            (== a1 a2)
+            (stmts
+              (assign_stmt a3
+                (* a1 a2)
+              )
+              (stmts
+                (call niggaman)
+              )
+            )
+            (else
+              (stmts
+                (assign_stmt b5 true)
+                (stmts
+                  (assign_stmt a4 a3)
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+  }
+)
+--- Semantic Analysis ---
+
+=== SCOPE SYMBOL TABLE ===
+NAME            | TYPE            | KIND           
+--------------------------------------------------
+a2              | int             | var            
+a1              | int             | var            
+==========================
+
+=== SCOPE SYMBOL TABLE ===
+NAME            | TYPE            | KIND           
+--------------------------------------------------
+a2              | int             | var            
+a1              | int             | var            
+==========================
+Semantic Error: Variable 'a1' is used before it is defined!

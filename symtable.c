@@ -2,6 +2,28 @@
 
 Scope* current_scope = NULL;
 
+void print_scope() {
+    if (current_scope == NULL) return;
+    
+    printf("\n=== SCOPE SYMBOL TABLE ===\n");
+    printf("%-15s | %-15s | %-15s\n", "NAME", "TYPE", "KIND");
+    printf("--------------------------------------------------\n");
+    
+    Symbol* runner = current_scope->head;
+    if (runner == NULL) {
+        printf(" (Empty Scope)\n");
+    }
+    
+    while (runner != NULL) {
+        printf("%-15s | %-15s | %-15s\n", 
+               runner->name, 
+               runner->type ? runner->type : "N/A", 
+               runner->kind ? runner->kind : "N/A");
+        runner = runner->next;
+    }
+    printf("==========================\n");
+}
+
 void push_scope() {
     Scope* new_scope = (Scope*)malloc(sizeof(Scope));
     new_scope->head = NULL;
@@ -11,11 +33,14 @@ void push_scope() {
     current_scope = new_scope; 
 }
 
+/* Exit a scope (Pops the top table and deletes it) */
 void pop_scope() {
     if (current_scope == NULL) return;
 
+    print_scope(); 
+
     Scope* temp_scope = current_scope;
-    current_scope = current_scope->next; 
+    current_scope = current_scope->next; /* Drop down to the parent scope */
 
     Symbol* curr_sym = temp_scope->head;
     while (curr_sym != NULL) {

@@ -20,10 +20,12 @@ typedef struct Scope {
 
 extern Scope* current_scope;
 
+/* Core Functions */
 void push_scope();                                   
 void pop_scope();                                    
 int insert_symbol(char* name, char* type, char* kind); 
 Symbol* lookup_symbol(char* name);                   
 Symbol* lookup_current_scope(char* name);            
+void print_scope();          
 
 #endif

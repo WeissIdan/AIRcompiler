@@ -3,12 +3,17 @@
 #include<string.h>
 #include<stdlib.h>
 #include "ast.h"
+#include "symtable.h"
+#include "symtable.c"
+#include "semantic.c"
 
 extern int yylineno; 
 extern char* yytext;
 
 int yylex();
 int yyerror(const char *s);
+void build_table(node* tree);
+void check_main_exists();
 %}
 
 %union {
@@ -31,8 +36,8 @@ int yyerror(const char *s);
 %token EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL 
 %token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP
 
-%type <ast_node> program funcs func proc arg_list args type type_literals
-%type <ast_node> var_definition gen_stmts stmts stmt if_stmt while_stmt
+%type <ast_node> program funcs func proc arg_list args type type_literals args_literals
+%type <ast_node> var_definition gen_stmts stmts stmt if_stmt while_stmt decls decl
 %type <ast_node> for_stmt for_body if_body assign_stmt expr inits updates
 
 %nonassoc LOWER_THAN_ELSE
@@ -48,7 +53,14 @@ int yyerror(const char *s);
 %%
 
 
-program: funcs { printtree($1, 0); printf("\n");};
+program: funcs { node* root = mknode("CODE", $1, NULL);
+    printtree(root, 0); 
+    printf("\n"); 
+
+    /* Build the Symbol Table */
+    printf("--- Semantic Analysis ---\n");
+    build_table(root);
+    };
 
 funcs: func funcs { $$ = mknode("funcs", $1, $2); }
      | proc funcs { $$ = mknode("procs", $1, $2); }
@@ -67,7 +79,7 @@ args: ID ',' args { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
     | ID { $$ = mknode("arg", mknode($1, NULL, NULL), NULL);};
 
 args_literals: ID ',' args_literals { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
-    | ID { $$ = mknode("arg", mknode($1, NULL, NULL), NULL);}
+    | ID { $$ = mknode("arg", mknode($1,NULL,NULL), NULL);}
     | type_literals { $$ = mknode("literal",$1, NULL);}
     | type_literals ',' args_literals { $$ = mknode("literal", $1 ,$3); };
 
@@ -107,9 +119,20 @@ type_literals: INT_LITERAL {
 
 var_definition: VAR args ':' type ';' {$$ = mknode("var_def", $2, $4);};
 
-gen_stmts: var_definition gen_stmts {$$ = mknode("gen_statements", $1, $2);}
-         | funcs
-         | stmts {$$ = $1;};
+gen_stmts: decls stmts { $$ = mknode("gen_statements", $1, $2); }
+         | stmts       { $$ = $1; }
+         | decls       { $$ = $1; }
+         |             { $$ = NULL; } /* Empty block */
+         ;
+
+decls: decl decls { $$ = mknode("decls", $1, $2); }
+     | decl       { $$ = $1; }
+     ;
+
+decl: var_definition { $$ = $1; }
+    | func           { $$ = $1; }
+    | proc           { $$ = $1; }
+    ;
 
 stmts: stmt stmts { $$ = mknode("stmts", $1, $2); }
      | stmt       { $$ = mknode("stmts", $1, NULL); };
@@ -118,6 +141,8 @@ stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
     | assign_stmt {$$ = $1;}
     | while_stmt {$$ = $1;}
+    | ID '(' args_literals ')' ';' { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' ')' ';'  { $$ = mknode("call", mknode($1, NULL, NULL), NULL);}
     | RETURN expr ';' { $$ = mknode("return", $2, NULL); }
     | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); };
 
@@ -154,6 +179,7 @@ expr: expr PLUS expr       { $$ = mknode("+", $1, $3); }
     | type_literals        { $$ = $1; }
     | ID                   { $$ = mknode($1, NULL, NULL); }
     | ID '(' args_literals ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' ')'                    { $$ = mknode("call", mknode($1, NULL, NULL), NULL); }
     | '(' expr ')'         { $$ = $2; }
     | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
     | ADDRESS_OF expr      { $$ = mknode("&", $2, NULL); }
@@ -169,9 +195,15 @@ inits: assign_stmt { $$ = $1; }
 
 %%
 #include "lex.yy.c"
-int main()
-{
-    return yyparse();
+int main() {
+    current_scope = NULL;
+    push_scope(); 
+    
+    printf("Starting Compilation...\n");
+    yyparse(); 
+    print_scope();
+    check_main_exists();
+    return 0;
 }
 
 int yyerror(const char* s)
