@@ -8,7 +8,8 @@
 typedef struct Symbol {
     char* name;         
     char* type;         
-    char* kind;         
+    char* kind;      
+    int num_params;   
     
     struct Symbol* next; 
 } Symbol;
@@ -23,7 +24,7 @@ extern Scope* current_scope;
 /* Core Functions */
 void push_scope();                                   
 void pop_scope();                                    
-int insert_symbol(char* name, char* type, char* kind); 
+int insert_symbol(char* name, char* type, char* kind, int num_params);
 Symbol* lookup_symbol(char* name);                   
 Symbol* lookup_current_scope(char* name);            
 void print_scope();          

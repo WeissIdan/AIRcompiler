@@ -25,6 +25,11 @@ Starting Compilation...
           }
           (decls
             {proc niggaman
+              (arg_list
+                (arg a1
+                  (arg a2)
+                ) int
+              )
               (gen_statements
                 (var_def
                   (arg a1
@@ -47,21 +52,23 @@ Starting Compilation...
           )
         )
         (stmts
-          (if_stmt
-            (== a1 a2)
-            (stmts
-              (assign_stmt a3
-                (* a1 a2)
-              )
+          (call niggaman
+            (arg a3)
+          )
+          (stmts
+            (if_stmt
+              (== a3 a4)
               (stmts
-                (call niggaman)
+                (assign_stmt a3
+                  (* a4 a4)
+                )
               )
-            )
-            (else
-              (stmts
-                (assign_stmt b5 true)
+              (else
                 (stmts
-                  (assign_stmt a4 a3)
+                  (assign_stmt b5 true)
+                  (stmts
+                    (assign_stmt a4 a3)
+                  )
                 )
               )
             )
@@ -86,4 +93,4 @@ NAME            | TYPE            | KIND
 a2              | int             | var            
 a1              | int             | var            
 ==========================
-Semantic Error: Variable 'a1' is used before it is defined!
+Semantic Error: Function/Procedure 'niggaman' expects 0 arguments, but 1 were provided!

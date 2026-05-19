@@ -55,6 +55,8 @@ COMMENT     \/\%([^%]|%+[^/])*\%\/
 "^"         { return DEREFERENCE; }
 "&"         { return ADDRESS_OF; }
 "|"         { return LENGTH_OP; }
+"||"        { return OR; }
+"&&"        { return AND; }
 
  /*Punctuation*/
 ";"         { return ';'; }

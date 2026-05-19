@@ -54,17 +54,20 @@ void pop_scope() {
     free(temp_scope);
 }
 
-int insert_symbol(char* name, char* type, char* kind) {
+/* Add 'int num_params' to the arguments */
+int insert_symbol(char* name, char* type, char* kind, int num_params) {
     if (current_scope == NULL) push_scope(); 
 
     if (lookup_current_scope(name) != NULL) {
-        return 0;
+        return 0; 
     }
 
     Symbol* new_sym = (Symbol*)malloc(sizeof(Symbol));
     new_sym->name = strdup(name);
     new_sym->type = type ? strdup(type) : NULL;
     new_sym->kind = kind ? strdup(kind) : NULL;
+    
+    new_sym->num_params = num_params; /* <--- NEW: Save the count! */
 
     new_sym->next = current_scope->head;
     current_scope->head = new_sym;

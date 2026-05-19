@@ -34,7 +34,7 @@ void check_main_exists();
 
 %token PLUS MINUS MULTIPLY DIVIDE 
 %token EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL 
-%token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP
+%token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP OR AND
 
 %type <ast_node> program funcs func proc arg_list args type type_literals args_literals
 %type <ast_node> var_definition gen_stmts stmts stmt if_stmt while_stmt decls decl
@@ -44,6 +44,8 @@ void check_main_exists();
 %nonassoc ELSE
 
 %right ASSIGN 
+%left OR
+%left AND
 %left EQUAL NOT_EQUAL
 %left LESS LESS_EQUAL GREATER GREATER_EQUAL
 %left PLUS MINUS
@@ -165,7 +167,9 @@ assign_stmt: ID ASSIGN expr ';' {$$ = mknode("assign_stmt", mknode($1, NULL, NUL
 updates: ID ASSIGN expr { $$ = mknode("assign_stmt", mknode($1, NULL, NULL), $3); } 
        | { $$ = NULL; };
 
-expr: expr PLUS expr       { $$ = mknode("+", $1, $3); }
+expr: expr OR expr         { $$ = mknode("||", $1, $3); }
+    | expr AND expr        { $$ = mknode("&&", $1, $3); }
+    | expr PLUS expr       { $$ = mknode("+", $1, $3); }
     | expr MINUS expr      { $$ = mknode("-", $1, $3); }
     | expr MULTIPLY expr   { $$ = mknode("*", $1, $3); }
     | expr DIVIDE expr     { $$ = mknode("/", $1, $3); }

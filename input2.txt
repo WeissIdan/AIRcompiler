@@ -6,16 +6,15 @@ proc Main ()
         a2 = 4;
         return 3;
     }
-    proc niggaman(){
+    proc niggaman(a1, a2 : int){
         var a1, a2:int;
         a1 = 5;
         a2 = 4;
     }
     var a3,a4:int;
-
-    if(a1==a2){
-        a3=a1*a2;
-        niggaman();
+    niggaman(a3);
+    if(a3==a4){
+        a3=a4*a4;
     }   
     else{
         b5=true;
