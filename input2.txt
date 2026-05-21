@@ -4,7 +4,7 @@ proc Main ()
         var a1, a2:int;
         a1 = 5;
         a2 = 4;
-        return 3;
+        return 5;
     }
     proc niggaman(a1, a2 : int){
         a1 = 5;
@@ -12,12 +12,8 @@ proc Main ()
     }
     var a3,a4:int;
     var b5 : real;
-    niggaman(3, false);
-    if(a3==a4){
+    b5 = a3;
+    for(a3=0; 5; a3=a3+1){
         a3=a4*a4;
     }   
-    else{
-        b5=true;
-        a4=a3;
-    }
 }

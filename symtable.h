@@ -16,6 +16,7 @@ typedef struct Symbol {
 
 typedef struct Scope {
     char* scope_name;
+    char* return_type;
     Symbol* head;        
     struct Scope* next;  
 } Scope;
@@ -23,7 +24,7 @@ typedef struct Scope {
 extern Scope* current_scope;
 
 /* Core Functions */
-void push_scope(const char* name);
+void push_scope(const char* name, const char* return_type);
 void pop_scope();                                    
 int insert_symbol(char* name, char* type, char* kind, int num_params, char** param_types);
 Symbol* lookup_symbol(char* name);                   

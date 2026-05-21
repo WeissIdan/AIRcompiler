@@ -7,6 +7,24 @@
 int main_found = 0;
 /* Helper for Rule 16: Math Operators (+, -, *, /) */
 char* check_math_op(char* op, char* left_type, char* right_type) {
+
+    /* --- POINTER ARITHMETIC RULE --- */
+    int left_is_ptr  = (strstr(left_type,  "*") != NULL);
+    int right_is_ptr = (strstr(right_type, "*") != NULL);
+
+    if (left_is_ptr || right_is_ptr) {
+        /* Rule: only + and - are allowed with pointers */
+        if (strcmp(op, "+") != 0 && strcmp(op, "-") != 0) {
+            printf("Semantic Error: Operator '%s' cannot be used with pointer types!\n", op);
+            exit(1);
+        }
+        /* ptr + int → valid */
+        if (left_is_ptr && strcmp(right_type, "int") == 0) return left_type;
+        printf("Semantic Error: Can only add or subtract 'int' from a pointer, but got '%s' and '%s'!\n",
+            left_type, right_type);
+        exit(1);
+    }
+
     /* Check if both are valid numbers */
     int left_valid = (strcmp(left_type, "int") == 0 || strcmp(left_type, "real") == 0);
     int right_valid = (strcmp(right_type, "int") == 0 || strcmp(right_type, "real") == 0);
@@ -166,6 +184,50 @@ char* get_expr_type(node* expr) {
         }
         return "bool";
     }
+    if (strcmp(expr->token, "&") == 0) {
+        node* operand = expr->left;
+
+        /* Must be a simple variable*/
+        if (operand == NULL || operand->left != NULL || operand->right != NULL) {
+            printf("Semantic Error: '&' can only be applied to a variable, not a complex expression!\n");
+            exit(1);
+        }
+
+        /* Look up the variable's type */
+        Symbol* sym = lookup_symbol(operand->token);
+        if (sym == NULL) {
+            printf("Semantic Error: Variable '%s' is not defined!\n", operand->token);
+            exit(1);
+        }
+
+        char* var_type = sym->type;
+
+        /* Valid types: int, real, char, string[N] */
+        if (strcmp(var_type, "int") == 0)  return "int*";
+        if (strcmp(var_type, "real") == 0) return "real*";
+        if (strcmp(var_type, "char") == 0) return "char*";
+        if (strstr(var_type, "string") != NULL) return "char*";
+
+        printf("Semantic Error: '&' can only be applied to 'int', 'real', 'char', or 'string[N]', but got '%s'!\n", var_type);
+        exit(1);
+    }
+
+
+    /* Dereference operator ^ */
+    if (strcmp(expr->token, "^") == 0) {
+        char* operand_type = get_expr_type(expr->left);
+
+        /* Must be a pointer type (contains '*') */
+        if (strstr(operand_type, "*") == NULL) {
+            printf("Semantic Error: '^' can only be applied to a pointer, but got '%s'!\n", operand_type);
+            exit(1);
+        }
+
+        /* Return the base type: int* -> int, real* -> real, char* -> char */
+        if (strcmp(operand_type, "int*")  == 0) return "int";
+        if (strcmp(operand_type, "real*") == 0) return "real";
+        if (strcmp(operand_type, "char*") == 0) return "char";
+    }
     return "error"; 
 }
 
@@ -286,6 +348,10 @@ void build_table(node* tree) {
             char* return_type = "void";
             if (strcmp(kind, "func") == 0) {
                 return_type = tree->left->left->token;
+                if (strcmp(return_type, "string") == 0) {
+                    printf("Semantic Error: Function '%s' cannot have a 'string' return type!\n", name);
+                    exit(1);
+                }
             }
 
             if (strcmp(name, "Main") == 0) {
@@ -322,7 +388,7 @@ void build_table(node* tree) {
                 exit(1);
             }
 
-            push_scope(name); 
+            push_scope(name, return_type); 
             process_arg_list(arg_list);
             build_table(body); 
             pop_scope();  
@@ -330,16 +396,76 @@ void build_table(node* tree) {
         }
         
         /* --- 3. HANDLE CONTROL FLOW BLOCKS --- */
+       /* --- 3. HANDLE CONTROL FLOW BLOCKS (Rules 11 & 12) --- */
         else if (strcmp(tree->token, "if_stmt") == 0 || 
                  strcmp(tree->token, "while_stmt") == 0 || 
                  strcmp(tree->token, "for") == 0 ||
                  strcmp(tree->token, "else") == 0) {
             
-            push_scope(tree->token);
+            /* RULE 11 & 12: Check that conditions evaluate to a boolean! */
+            if (strcmp(tree->token, "if_stmt") == 0 || strcmp(tree->token, "while_stmt") == 0) {
+                char* cond_type;
+                
+                /* Yacc handles standard 'if' and 'if/else' differently! */
+                if (tree->left != NULL && tree->left->token != NULL && strcmp(tree->left->token, "") == 0) {
+                    /* It's an if/else! The condition is hiding one level deeper at left->left */
+                    cond_type = get_expr_type(tree->left->left); 
+                } else {
+                    /* It's a standard if or while! The condition is right here */
+                    cond_type = get_expr_type(tree->left); 
+                }
+                
+                if (strcmp(cond_type, "bool") != 0) {
+                    printf("Semantic Error: '%s' condition must evaluate to 'bool', but got '%s'!\n", tree->token, cond_type);
+                    exit(1); /* HARD STOP */
+                }
+            } else if (strcmp(tree->token, "for") == 0) {
+                /* In your Yacc file, the 'for' condition is tucked at tree->right->left */
+                char* cond_type = get_expr_type(tree->right->left); 
+                if (strcmp(cond_type, "bool") != 0) {
+                    printf("Semantic Error: 'for' loop condition must evaluate to 'bool', but got '%s'!\n", cond_type);
+                    exit(1); /* HARD STOP */
+                }
+            }
+
+            /* Push scope and continue walking the tree normally */
+            push_scope(tree->token, current_scope->return_type);
             build_table(tree->left);
             build_table(tree->right);
             pop_scope();
             return; 
+        }
+        /* --- 6. HANDLE ASSIGNMENTS (Rules 10 & 15) --- */
+        else if (strcmp(tree->token, "assign_stmt") == 0) {
+            char* var_name = tree->left->token;
+            Symbol* sym = lookup_symbol(var_name);
+            
+            if (sym == NULL) {
+                printf("Semantic Error: Variable '%s' is used before it is defined!\n", var_name);
+                exit(1);
+            }
+            
+            /* ACTIVATE THE ENGINE: Get the type of the right side! */
+            char* right_type = get_expr_type(tree->right);
+            
+            /* Rule 15 Special Case: 'null' can only be assigned to pointers */
+            if (strcmp(right_type, "null") == 0) {
+                if (strstr(sym->type, "*") == NULL) {
+                    printf("Semantic Error: Cannot assign 'null' to non-pointer variable '%s'!\n", var_name);
+                    exit(1);
+                }
+            } 
+            /* Rule 10 & 15: The types must match exactly */
+            else if (strcmp(sym->type, right_type) != 0) {
+                int is_valid_cast = (strcmp(sym->type, "real") == 0 && strcmp(right_type, "int") == 0);
+                if(!is_valid_cast){
+                printf("Semantic Error: Cannot assign type '%s' to variable '%s' (which is type '%s')!\n", 
+                       right_type, var_name, sym->type);
+                exit(1); /* HARD STOP */}
+            }
+            
+            build_table(tree->right);
+            return;
         }
         
         /* --- 4. HANDLE CALLS (Rules 5 & 7) --- */
@@ -388,6 +514,24 @@ void build_table(node* tree) {
             build_table(tree->right); 
             return; 
         }
+        /* --- 7. HANDLE RETURNS (Rule 9) --- */
+        else if (strcmp(tree->token, "return") == 0) {
+            char* actual_return_type = "void";
+            
+            /* If the return has an expression attached, activate the engine to get its type! */
+            if (tree->left != NULL && strcmp(tree->left->token, "NONE") != 0) {
+                actual_return_type = get_expr_type(tree->left);
+            }
+
+            /* RULE 9 (Part 2): Compare to the current scope's expected return type! */
+            if (strcmp(actual_return_type, current_scope->return_type) != 0) {
+                printf("Semantic Error: Scope '%s' expects return type '%s', but got '%s'!\n",
+                       current_scope->scope_name, current_scope->return_type, actual_return_type);
+                exit(1); /* HARD STOP */
+            }
+            
+            return;
+        }
         
         /* --- 5. HANDLE VARIABLE USAGE (Rule 6) --- */
         else if (tree->left == NULL && tree->right == NULL) {
@@ -406,6 +550,13 @@ void build_table(node* tree) {
                 }
             }
             return; 
+        }
+        else if (strcmp(tree->token, "assign_stmt") == 0) {
+            /* First walk left (the variable) to check it exists */
+            build_table(tree->left);
+            /* Then type-check the right-hand side expression */
+            get_expr_type(tree->right);
+            return;
         }
     } 
 

@@ -17,7 +17,7 @@ Starting Compilation...
                 (stmts
                   (assign_stmt a2 4)
                   (stmts
-                    (return 3)
+                    (return 5)
                   )
                 )
               )
@@ -50,25 +50,16 @@ Starting Compilation...
           )
         )
         (stmts
-          (call niggaman
-            (arg 3
-              (arg false)
-            )
-          )
+          (assign_stmt b5 a3)
           (stmts
-            (if_stmt
-              (== a3 a4)
+            (for
+              (assign_stmt a3 0) 5
+              (assign_stmt a3
+                (+ a3 1)
+              )
               (stmts
                 (assign_stmt a3
                   (* a4 a4)
-                )
-              )
-              (else
-                (stmts
-                  (assign_stmt b5 true)
-                  (stmts
-                    (assign_stmt a4 a3)
-                  )
                 )
               )
             )
@@ -93,4 +84,4 @@ NAME            | TYPE            | KIND
 a2              | int             | arg            
 a1              | int             | arg            
 ==========================
-Semantic Error: Argument #2 of 'niggaman' expects type 'int', but got 'bool'!
+Semantic Error: 'for' loop condition must evaluate to 'bool', but got 'int'!

@@ -28,10 +28,12 @@ void print_scope() {
 }
 
 
-void push_scope(const char* name) {
+void push_scope(const char* name, const char* return_type) {
     Scope* new_scope = (Scope*)malloc(sizeof(Scope));
     
     new_scope->scope_name = name ? strdup(name) : strdup("Unnamed"); 
+    /* Save the expected return type (default to "void" if none given) */
+    new_scope->return_type = return_type ? strdup(return_type) : strdup("void"); 
     
     new_scope->head = NULL;
     new_scope->next = current_scope;
@@ -47,6 +49,8 @@ void pop_scope() {
     Scope* temp_scope = current_scope;
     current_scope = current_scope->next; /* Drop down to the parent scope */
     if (temp_scope->scope_name) free(temp_scope->scope_name);
+    if (temp_scope->return_type) free(temp_scope->return_type); 
+
     Symbol* curr_sym = temp_scope->head;
     while (curr_sym != NULL) {
         Symbol* temp_sym = curr_sym;
@@ -69,16 +73,22 @@ void pop_scope() {
 /* Add 'int num_params' to the arguments */
 /* Update insert_symbol to take 5 arguments */
 int insert_symbol(char* name, char* type, char* kind, int num_params, char** param_types) {
-    if (current_scope == NULL) push_scope("Global"); 
-    if (lookup_current_scope(name) != NULL) return 0; 
+    if (current_scope == NULL) push_scope("Global", "void"); 
 
-    Symbol* new_sym = (Symbol*)malloc(sizeof(Symbol));
+    if (lookup_current_scope(name) != NULL) {
+        return 0; /* Duplicate found */
+    }
+
+    /* USE CALLOC INSTEAD OF MALLOC: This guarantees clean, zeroed-out memory! */
+    Symbol* new_sym = (Symbol*)calloc(1, sizeof(Symbol));
+    
     new_sym->name = strdup(name);
     new_sym->type = type ? strdup(type) : NULL;
     new_sym->kind = kind ? strdup(kind) : NULL;
     new_sym->num_params = num_params;
     
-    new_sym->param_types = param_types; /* <--- NEW: Save the array */
+    /* EXPLICITLY SAVE THE ARRAY (or NULL) */
+    new_sym->param_types = param_types; 
 
     new_sym->next = current_scope->head;
     current_scope->head = new_sym;

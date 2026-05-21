@@ -199,7 +199,7 @@ inits: assign_stmt { $$ = $1; }
 #include "lex.yy.c"
 int main() {
     current_scope = NULL;
-    push_scope("Global"); 
+    push_scope("Global", "void"); 
     
     printf("Starting Compilation...\n");
     yyparse(); 
