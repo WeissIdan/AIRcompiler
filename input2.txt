@@ -11,9 +11,27 @@ proc Main ()
         a2 = 4;
     }
     var a3,a4:int;
-    var b5 : real;
-    b5 = a3;
-    for(a3=0; 5; a3=a3+1){
-        a3=a4*a4;
-    }   
+    var b5 : bool;
+    var x  : int;
+    var y    : real;
+    var c    : char;
+    var s    : string[20];
+    var p_int  : int*;
+    var p_real : real*;
+    var p_char : char*;
+
+    /% Valid pointer arithmetic: ptr + int, ptr - int %/
+    p_int = p_int + x;
+    p_int = p_int - x;
+
+    /% Valid &: on int, real, char, string[N] %/
+    p_real = &y;
+    p_char = &c;
+    p_char = &s;
+
+    /% Valid ^: dereference each pointer type %/
+    x = ^y;
+    y = ^p_real;
+    c = ^p_char;
+       
 }

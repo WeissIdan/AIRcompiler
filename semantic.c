@@ -5,10 +5,9 @@
 #include "symtable.h"
 
 int main_found = 0;
-/* Helper for Rule 16: Math Operators (+, -, *, /) */
+/* Helper for Rule 16: Math Operators*/
 char* check_math_op(char* op, char* left_type, char* right_type) {
 
-    /* --- POINTER ARITHMETIC RULE --- */
     int left_is_ptr  = (strstr(left_type,  "*") != NULL);
     int right_is_ptr = (strstr(right_type, "*") != NULL);
 
@@ -18,7 +17,7 @@ char* check_math_op(char* op, char* left_type, char* right_type) {
             printf("Semantic Error: Operator '%s' cannot be used with pointer types!\n", op);
             exit(1);
         }
-        /* ptr + int → valid */
+        /* ptr + int is valid */
         if (left_is_ptr && strcmp(right_type, "int") == 0) return left_type;
         printf("Semantic Error: Can only add or subtract 'int' from a pointer, but got '%s' and '%s'!\n",
             left_type, right_type);
@@ -32,7 +31,7 @@ char* check_math_op(char* op, char* left_type, char* right_type) {
     if (!left_valid || !right_valid) {
         printf("Semantic Error: Invalid types for operator '%s'. Expected 'int' or 'real', but got '%s' and '%s'!\n",
                op, left_type, right_type);
-        exit(1); /* HARD STOP */
+        exit(1); 
     }
 
     /* If both are int, the result is int. Otherwise, the result gets upgraded to real. */
@@ -41,7 +40,7 @@ char* check_math_op(char* op, char* left_type, char* right_type) {
     }
     return "real";
 }
-/* Helper for Rule 16: Relational Operators (<, >, <=, >=) */
+/* Helper for Rule 16: Relational Operators*/
 char* check_relational_op(char* op, char* left_type, char* right_type) {
     /* Both must be numbers (int or real) */
     int left_valid = (strcmp(left_type, "int") == 0 || strcmp(left_type, "real") == 0);
@@ -50,32 +49,27 @@ char* check_relational_op(char* op, char* left_type, char* right_type) {
     if (!left_valid || !right_valid) {
         printf("Semantic Error: Operator '%s' expects 'int' or 'real', but got '%s' and '%s'!\n",
                op, left_type, right_type);
-        exit(1); /* HARD STOP */
+        exit(1); 
     }
-
-    /* The result of a comparison is always a boolean */
     return "bool";
 }
 
-/* Helper for Rule 16: Equality Operators (==, !=) */
+/* Helper for Rule 16: Equality Operators */
 char* check_equality_op(char* op, char* left_type, char* right_type) {
     /* Rule 1: The types must match exactly */
     if (strcmp(left_type, right_type) != 0) {
         printf("Semantic Error: Operator '%s' requires matching types, but got '%s' and '%s'!\n",
                op, left_type, right_type);
-        exit(1); /* HARD STOP */
+        exit(1); 
     }
     
-    /* Rule 2: They must be valid comparable types (int, real, bool, char, or pointers) */
-    /* (strstr checks if there is a '*' in the type name to allow pointers) */
+    /* Rule 2: They must be valid comparable types */
     if (strcmp(left_type, "int") != 0 && strcmp(left_type, "real") != 0 &&
         strcmp(left_type, "bool") != 0 && strcmp(left_type, "char") != 0 &&
         strstr(left_type, "*") == NULL) {
         printf("Semantic Error: Type '%s' cannot be compared using '%s'!\n", left_type, op);
-        exit(1); /* HARD STOP */
+        exit(1); 
     }
-    
-    /* The result of checking equality is always a boolean */
     return "bool";
 }
 
@@ -84,62 +78,51 @@ char* check_logic_op(char* op, char* left_type, char* right_type) {
     if (strcmp(left_type, "bool") != 0 || strcmp(right_type, "bool") != 0) {
         printf("Semantic Error: Operator '%s' expects 'bool' on both sides, but got '%s' and '%s'!\n",
                op, left_type, right_type);
-        exit(1); /* HARD STOP */
+        exit(1);
     }
     return "bool";
 }
 
-/* THE TYPE EVALUATOR: Recursively figures out the type of any expression */
 char* get_expr_type(node* expr) {
     if (expr == NULL) return "void";
     
     char f = expr->token[0];
     
-    /* --- 1. BASE CASES (Leaf Nodes) --- */
-    /* Is it a literal number? (e.g., "5" or "3.14") */
     if (f >= '0' && f <= '9') {
         if (strchr(expr->token, '.') != NULL) return "real";
         return "int";
     }
-    /* Is it a char or string literal? */
     if (f == '\'') return "char";
     if (f == '"') return "string";
     
-    /* Is it a boolean or null keyword? */
     if (strcmp(expr->token, "true") == 0 || strcmp(expr->token, "false") == 0) return "bool";
     if (strcmp(expr->token, "null") == 0) return "null";
     
-    /* Is it a function call? Look up its return type! */
     if (strcmp(expr->token, "call") == 0) {
         Symbol* sym = lookup_symbol(expr->left->token);
         if (sym != NULL) return sym->type;
-        return "error"; /* Rule 5 handles missing functions */
+        return "error"; 
     }
     
-    /* Is it a variable? Look up its saved type! */
     if (expr->left == NULL && expr->right == NULL) {
         if ((f >= 'a' && f <= 'z') || (f >= 'A' && f <= 'Z')) {
             Symbol* sym = lookup_symbol(expr->token);
             if (sym != NULL) return sym->type;
-            return "error"; /* Rule 6 handles missing variables */
+            return "error"; 
         }
     }
 
-    /* --- 2. RECURSIVE CASES (Operators) --- */
     
     /* Math Operators */
     if (strcmp(expr->token, "+") == 0 || strcmp(expr->token, "-") == 0 ||
         strcmp(expr->token, "*") == 0 || strcmp(expr->token, "/") == 0) {
         
-        /* Recursively get the type of the left and right sides */
         char* left_type = get_expr_type(expr->left);
         char* right_type = get_expr_type(expr->right);
         
-        /* Delegate the logic to our clean helper function */
         return check_math_op(expr->token, left_type, right_type);
     }
     
-    /* Unary Minus (e.g., -5 or -x) */
     if (strcmp(expr->token, "UMINUS") == 0) {
         char* child_type = get_expr_type(expr->left);
         if (strcmp(child_type, "int") != 0 && strcmp(child_type, "real") != 0) {
@@ -165,7 +148,6 @@ char* get_expr_type(node* expr) {
         char* right_type = get_expr_type(expr->right);
         return check_equality_op(expr->token, left_type, right_type);
     }
-    /* ... inside get_expr_type, below the Equality check ... */
 
     /* Logical Operators (&&, ||) */
     if (strcmp(expr->token, "&&") == 0 || strcmp(expr->token, "||") == 0) {
@@ -175,12 +157,11 @@ char* get_expr_type(node* expr) {
     }
     
     /* Logical NOT (!) */
-    /* Note: In your Yacc file, mknode("!", $2, NULL) puts the expression on the LEFT */
     if (strcmp(expr->token, "!") == 0) {
         char* child_type = get_expr_type(expr->left); 
         if (strcmp(child_type, "bool") != 0) {
             printf("Semantic Error: Operator '!' expects a 'bool', but got '%s'!\n", child_type);
-            exit(1); /* HARD STOP */
+            exit(1); 
         }
         return "bool";
     }
@@ -223,7 +204,6 @@ char* get_expr_type(node* expr) {
             exit(1);
         }
 
-        /* Return the base type: int* -> int, real* -> real, char* -> char */
         if (strcmp(operand_type, "int*")  == 0) return "int";
         if (strcmp(operand_type, "real*") == 0) return "real";
         if (strcmp(operand_type, "char*") == 0) return "char";
@@ -231,7 +211,7 @@ char* get_expr_type(node* expr) {
     return "error"; 
 }
 
-/* Helper function to extract all variables from an "arg" chain */
+/* Helper function to extract all variables from an arg chain */
 void process_var_list(node* var_list, char* type) {
     if (var_list == NULL) return;
 
@@ -277,7 +257,7 @@ int count_actual_args(node* args) {
     return count;
 }
 
-/* Helper function to extract function/proc arguments and add them to the LOCAL scope */
+/* Helper function to extract function/proc arguments and add them to the local scope */
 void process_arg_list(node* arg_list) {
     if (arg_list == NULL) return;
 
@@ -331,14 +311,14 @@ void build_table(node* tree) {
 
     if (!is_glue) {
         
-        /* --- 1. HANDLE VARIABLE DEFINITIONS --- */
+        /* veriable def  */
         if (strcmp(tree->token, "var_def") == 0) {
             char* type_name = tree->right->token;
             process_var_list(tree->left, type_name);
             return; 
         }
         
-        /* --- 2. HANDLE FUNCTIONS & PROCS --- */
+        /* funcs and procs*/
         else if (strcmp(tree->token, "func") == 0 || strcmp(tree->token, "proc") == 0) {
             char* name = tree->left->right->token;
             char* kind = tree->token; 
@@ -373,7 +353,6 @@ void build_table(node* tree) {
 
             int expected_args = count_formal_args(arg_list);
             
-            /* --- NEW: Build the parameter types array --- */
             char** param_types_array = NULL;
             if (expected_args > 0) {
                 param_types_array = (char**)malloc(expected_args * sizeof(char*));
@@ -381,7 +360,7 @@ void build_table(node* tree) {
                 fill_param_types(arg_list, param_types_array, &idx);
             }
 
-            /* Insert the func/proc WITH the new array */
+            /* Insert the func/proc */
             int success = insert_symbol(name, return_type, kind, expected_args, param_types_array);
             if (!success) {
                 printf("Semantic Error: '%s' is already declared in this scope!\n", name);
@@ -395,47 +374,40 @@ void build_table(node* tree) {
             return;
         }
         
-        /* --- 3. HANDLE CONTROL FLOW BLOCKS --- */
-       /* --- 3. HANDLE CONTROL FLOW BLOCKS (Rules 11 & 12) --- */
+        /* if,while,for,else */
         else if (strcmp(tree->token, "if_stmt") == 0 || 
                  strcmp(tree->token, "while_stmt") == 0 || 
                  strcmp(tree->token, "for") == 0 ||
                  strcmp(tree->token, "else") == 0) {
             
-            /* RULE 11 & 12: Check that conditions evaluate to a boolean! */
             if (strcmp(tree->token, "if_stmt") == 0 || strcmp(tree->token, "while_stmt") == 0) {
                 char* cond_type;
                 
-                /* Yacc handles standard 'if' and 'if/else' differently! */
                 if (tree->left != NULL && tree->left->token != NULL && strcmp(tree->left->token, "") == 0) {
-                    /* It's an if/else! The condition is hiding one level deeper at left->left */
                     cond_type = get_expr_type(tree->left->left); 
                 } else {
-                    /* It's a standard if or while! The condition is right here */
                     cond_type = get_expr_type(tree->left); 
                 }
                 
                 if (strcmp(cond_type, "bool") != 0) {
                     printf("Semantic Error: '%s' condition must evaluate to 'bool', but got '%s'!\n", tree->token, cond_type);
-                    exit(1); /* HARD STOP */
+                    exit(1); 
                 }
             } else if (strcmp(tree->token, "for") == 0) {
-                /* In your Yacc file, the 'for' condition is tucked at tree->right->left */
                 char* cond_type = get_expr_type(tree->right->left); 
                 if (strcmp(cond_type, "bool") != 0) {
                     printf("Semantic Error: 'for' loop condition must evaluate to 'bool', but got '%s'!\n", cond_type);
-                    exit(1); /* HARD STOP */
+                    exit(1); 
                 }
             }
 
-            /* Push scope and continue walking the tree normally */
             push_scope(tree->token, current_scope->return_type);
             build_table(tree->left);
             build_table(tree->right);
             pop_scope();
             return; 
         }
-        /* --- 6. HANDLE ASSIGNMENTS (Rules 10 & 15) --- */
+        /*assignment*/
         else if (strcmp(tree->token, "assign_stmt") == 0) {
             char* var_name = tree->left->token;
             Symbol* sym = lookup_symbol(var_name);
@@ -445,30 +417,28 @@ void build_table(node* tree) {
                 exit(1);
             }
             
-            /* ACTIVATE THE ENGINE: Get the type of the right side! */
             char* right_type = get_expr_type(tree->right);
             
-            /* Rule 15 Special Case: 'null' can only be assigned to pointers */
             if (strcmp(right_type, "null") == 0) {
                 if (strstr(sym->type, "*") == NULL) {
                     printf("Semantic Error: Cannot assign 'null' to non-pointer variable '%s'!\n", var_name);
                     exit(1);
                 }
             } 
-            /* Rule 10 & 15: The types must match exactly */
             else if (strcmp(sym->type, right_type) != 0) {
                 int is_valid_cast = (strcmp(sym->type, "real") == 0 && strcmp(right_type, "int") == 0);
                 if(!is_valid_cast){
                 printf("Semantic Error: Cannot assign type '%s' to variable '%s' (which is type '%s')!\n", 
                        right_type, var_name, sym->type);
-                exit(1); /* HARD STOP */}
+                exit(1); 
+            }
             }
             
             build_table(tree->right);
             return;
         }
         
-        /* --- 4. HANDLE CALLS (Rules 5 & 7) --- */
+        /* function calls*/
         else if (strcmp(tree->token, "call") == 0) {
             char* call_name = tree->left->token;
             Symbol* sym = lookup_symbol(call_name);
@@ -489,22 +459,19 @@ void build_table(node* tree) {
                        call_name, sym->num_params, provided_args);
                 exit(1);
             }
-            /* --- RULE 8 CHECK: Verify Argument Types --- */
-            node* curr_actual_arg = tree->right; /* The args passed in */
+            node* curr_actual_arg = tree->right; 
             int arg_index = 0;
             
             while (curr_actual_arg != NULL && 
                   (strcmp(curr_actual_arg->token, "arg") == 0 || strcmp(curr_actual_arg->token, "literal") == 0)) {
                 
-                /* ACTIVATE THE TYPE ENGINE: What type is the user passing in? */
                 char* actual_type = get_expr_type(curr_actual_arg->left);
                 char* expected_type = sym->param_types[arg_index];
                 
-                /* If they don't match exactly, throw an error! */
                 if (strcmp(actual_type, expected_type) != 0) {
                     printf("Semantic Error: Argument #%d of '%s' expects type '%s', but got '%s'!\n", 
                            arg_index + 1, call_name, expected_type, actual_type);
-                    exit(1); /* HARD STOP */
+                    exit(1); 
                 }
                 
                 curr_actual_arg = curr_actual_arg->right;
@@ -514,26 +481,24 @@ void build_table(node* tree) {
             build_table(tree->right); 
             return; 
         }
-        /* --- 7. HANDLE RETURNS (Rule 9) --- */
+        /*function returns */
         else if (strcmp(tree->token, "return") == 0) {
             char* actual_return_type = "void";
             
-            /* If the return has an expression attached, activate the engine to get its type! */
             if (tree->left != NULL && strcmp(tree->left->token, "NONE") != 0) {
                 actual_return_type = get_expr_type(tree->left);
             }
 
-            /* RULE 9 (Part 2): Compare to the current scope's expected return type! */
             if (strcmp(actual_return_type, current_scope->return_type) != 0) {
                 printf("Semantic Error: Scope '%s' expects return type '%s', but got '%s'!\n",
                        current_scope->scope_name, current_scope->return_type, actual_return_type);
-                exit(1); /* HARD STOP */
+                exit(1); 
             }
             
             return;
         }
         
-        /* --- 5. HANDLE VARIABLE USAGE (Rule 6) --- */
+        /* veriable usage*/
         else if (tree->left == NULL && tree->right == NULL) {
             char f = tree->token[0];
             if ((f >= 'a' && f <= 'z') || (f >= 'A' && f <= 'Z')) {

@@ -43,23 +43,82 @@ Starting Compilation...
                   (arg a4)
                 ) int
               )
-              (var_def
-                (arg b5) real
+              (decls
+                (var_def
+                  (arg b5) bool
+                )
+                (decls
+                  (var_def
+                    (arg x) int
+                  )
+                  (decls
+                    (var_def
+                      (arg y) real
+                    )
+                    (decls
+                      (var_def
+                        (arg c) char
+                      )
+                      (decls
+                        (var_def
+                          (arg s) string[20]
+                        )
+                        (decls
+                          (var_def
+                            (arg p_int) int*
+                          )
+                          (decls
+                            (var_def
+                              (arg p_real) real*
+                            )
+                            (var_def
+                              (arg p_char) char*
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
               )
             )
           )
         )
         (stmts
-          (assign_stmt b5 a3)
+          (assign_stmt p_int
+            (+ p_int x)
+          )
           (stmts
-            (for
-              (assign_stmt a3 0) 5
-              (assign_stmt a3
-                (+ a3 1)
+            (assign_stmt p_int
+              (- p_int x)
+            )
+            (stmts
+              (assign_stmt p_real
+                (& y)
               )
               (stmts
-                (assign_stmt a3
-                  (* a4 a4)
+                (assign_stmt p_char
+                  (& c)
+                )
+                (stmts
+                  (assign_stmt p_char
+                    (& s)
+                  )
+                  (stmts
+                    (assign_stmt x
+                      (^ y)
+                    )
+                    (stmts
+                      (assign_stmt y
+                        (^ p_real)
+                      )
+                      (stmts
+                        (assign_stmt c
+                          (^ p_char)
+                        )
+                      )
+                    )
+                  )
                 )
               )
             )
@@ -84,4 +143,4 @@ NAME            | TYPE            | KIND
 a2              | int             | arg            
 a1              | int             | arg            
 ==========================
-Semantic Error: 'for' loop condition must evaluate to 'bool', but got 'int'!
+Semantic Error: '^' can only be applied to a pointer, but got 'real'!
