@@ -5,12 +5,10 @@ Scope* current_scope = NULL;
 void print_scope() {
     if (current_scope == NULL) return;
     
-    /* Print the dynamic scope name instead of a generic title! */
     printf("\n=== SCOPE: %s ===\n", current_scope->scope_name);
     printf("%-15s | %-15s | %-15s\n", "NAME", "TYPE", "KIND");
     printf("--------------------------------------------------\n");
     
-    /* ... rest of the function stays exactly the same ... */
     
     Symbol* runner = current_scope->head;
     if (runner == NULL) {
@@ -32,7 +30,6 @@ void push_scope(const char* name, const char* return_type) {
     Scope* new_scope = (Scope*)malloc(sizeof(Scope));
     
     new_scope->scope_name = name ? strdup(name) : strdup("Unnamed"); 
-    /* Save the expected return type (default to "void" if none given) */
     new_scope->return_type = return_type ? strdup(return_type) : strdup("void"); 
     
     new_scope->head = NULL;
@@ -40,14 +37,14 @@ void push_scope(const char* name, const char* return_type) {
     current_scope = new_scope;
 }
 
-/* Exit a scope (Pops the top table and deletes it) */
+
 void pop_scope() {
     if (current_scope == NULL) return;
 
     print_scope(); 
 
     Scope* temp_scope = current_scope;
-    current_scope = current_scope->next; /* Drop down to the parent scope */
+    current_scope = current_scope->next; 
     if (temp_scope->scope_name) free(temp_scope->scope_name);
     if (temp_scope->return_type) free(temp_scope->return_type); 
 
@@ -70,16 +67,14 @@ void pop_scope() {
     free(temp_scope);
 }
 
-/* Add 'int num_params' to the arguments */
-/* Update insert_symbol to take 5 arguments */
+
 int insert_symbol(char* name, char* type, char* kind, int num_params, char** param_types) {
     if (current_scope == NULL) push_scope("Global", "void"); 
 
     if (lookup_current_scope(name) != NULL) {
-        return 0; /* Duplicate found */
+        return 0;
     }
 
-    /* USE CALLOC INSTEAD OF MALLOC: This guarantees clean, zeroed-out memory! */
     Symbol* new_sym = (Symbol*)calloc(1, sizeof(Symbol));
     
     new_sym->name = strdup(name);
@@ -87,7 +82,6 @@ int insert_symbol(char* name, char* type, char* kind, int num_params, char** par
     new_sym->kind = kind ? strdup(kind) : NULL;
     new_sym->num_params = num_params;
     
-    /* EXPLICITLY SAVE THE ARRAY (or NULL) */
     new_sym->param_types = param_types; 
 
     new_sym->next = current_scope->head;
