@@ -1,0 +1,77 @@
+
+{funcs
+  {func char get_last_char
+    (arg_list
+      (arg word) string
+    )
+    (gen_statements
+      (var_def
+        (arg len) int
+      )
+      (gen_statements
+        (var_def
+          (arg fallback) char
+        )
+        (stmts
+          (assign_stmt len
+            (|length| word)
+          )
+          (stmts
+            (if_stmt
+              (== len 0)
+              (stmts
+                (return 'E')
+              )
+            )
+            (stmts
+              (assign_stmt fallback 'Z')
+              (stmts
+                (return fallback)
+              )
+            )
+          )
+        )
+      )
+    )
+  }
+  {procs
+    {proc process_text
+      (gen_statements
+        (var_def
+          (arg my_sentence) string[100]
+        )
+        (gen_statements
+          (var_def
+            (arg i) int
+          )
+          (gen_statements
+            (var_def
+              (arg current_c) char
+            )
+            (stmts
+              (assign_stmt my_sentence Hello Compiler World!)
+              (stmts
+                (for
+                  (assign_stmt i 0)
+                  (< i
+                    (|length| my_sentence)
+                  )
+                  (assign_stmt i
+                    (+ i 1)
+                  )
+                  (stmts
+                    (assign_stmt current_c
+                      (call get_last_char
+                        (arg my_sentence)
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+  }
+}

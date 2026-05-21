@@ -1,0 +1,25 @@
+func get_last_char(word: string) return char {
+    var len: int;
+    var fallback: char;
+    
+    len = |word|;
+
+    if (len == 0) {
+        return 'E';
+    }
+
+    fallback = 'Z';
+    return fallback;
+}
+
+proc process_text() {
+    var my_sentence: string[100];
+    var i: int;
+    var current_c: char;
+
+    my_sentence = "Hello Compiler World!";
+
+    for (i = 0;; i < |my_sentence|; i = i + 1) {
+        current_c = get_last_char(my_sentence);
+    }
+}

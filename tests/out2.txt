@@ -1,0 +1,81 @@
+
+{funcs
+  {func real calculate_taxes
+    (arg_list
+      (arg income
+        (arg tax_rate)
+      ) real
+      (arg_list
+        (arg bonus) int
+      )
+    )
+    (gen_statements
+      (var_def
+        (arg total) real
+      )
+      (gen_statements
+        (var_def
+          (arg deductions) int
+        )
+        (stmts
+          (assign_stmt total income)
+          (stmts
+            (assign_stmt deductions bonus)
+            (stmts
+              (while_stmt
+                (> deductions 0)
+                (stmts
+                  (if_stmt
+                    (> total 50000)
+                    (stmts
+                      (assign_stmt total
+                        (- total
+                          (* tax_rate 2)
+                        )
+                      )
+                    )
+                    (else
+                      (stmts
+                        (assign_stmt total
+                          (- total tax_rate)
+                        )
+                      )
+                    )
+                  )
+                  (stmts
+                    (assign_stmt deductions
+                      (- deductions 1)
+                    )
+                  )
+                )
+              )
+              (stmts
+                (return total)
+              )
+            )
+          )
+        )
+      )
+    )
+  }
+  {procs
+    {proc main
+      (gen_statements
+        (var_def
+          (arg final_amount) real
+        )
+        (stmts
+          (assign_stmt final_amount
+            (call calculate_taxes
+              (literal 75000.5
+                (literal 20.5
+                  (literal 3)
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+  }
+}

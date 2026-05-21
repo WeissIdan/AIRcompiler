@@ -1,0 +1,16 @@
+proc foo(x, y, z: int; f: real){
+    var s : string[50];
+    if(x>y)
+        if(x < 7)
+            x = 8;
+    else 
+        x = 5;
+    
+}
+func goo(s : string) return int{
+    return |s|;
+    proc main() {
+        var final_amount: real;
+        final_amount = calculate_taxes(75000.50, 20.5, 3);
+    }
+}

@@ -1,0 +1,23 @@
+func calculate_taxes(income, tax_rate: real; bonus: int) return real {
+    var total: real;
+    var deductions: int;
+    
+    total = income;
+    deductions = bonus;
+
+    while (deductions > 0) {
+        if (total > 50000.0) {
+            total = total - (tax_rate * 2.0);
+        } else {
+            total = total - tax_rate;
+        }
+        deductions = deductions - 1;
+    }
+    
+    return total;
+}
+
+proc main() {
+    var final_amount: real;
+    final_amount = calculate_taxes(75000.50, 20.5, 3);
+}

@@ -1,0 +1,26 @@
+func check_memory(ptr: int*; is_active: bool) return bool {
+    var temp_val: int;
+
+    if (ptr == null) {
+        return false;
+    }
+
+    if (!is_active == false) {
+        temp_val = ^ptr;
+        ^ptr = temp_val * 10;
+    } else {
+        ^ptr = 0;
+    }
+
+    return true;
+}
+
+proc memory_test() {
+    var secret_code: int;
+    var code_ptr: int*;
+    var is_safe: bool;
+
+    secret_code = 404;
+    code_ptr = &secret_code;
+    is_safe = check_memory(code_ptr, true);
+}

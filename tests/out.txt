@@ -1,0 +1,66 @@
+
+{procs
+  {proc foo
+    (arg_list
+      (arg x
+        (arg y
+          (arg z)
+        )
+      ) int
+      (arg_list
+        (arg f) real
+      )
+    )
+    (gen_statements
+      (var_def
+        (arg s) string[50]
+      )
+      (stmts
+        (if_stmt
+          (> x y)
+          (if_stmt
+            (< x 7)
+            (assign_stmt x 8)
+            (else
+              (assign_stmt x 5)
+            )
+          )
+        )
+      )
+    )
+  }
+  {funcs
+    {func int goo
+      (arg_list
+        (arg s) string
+      )
+      (stmts
+        (return
+          (|length| s)
+        )
+        (stmts
+          {procs
+            {proc main
+              (gen_statements
+                (var_def
+                  (arg final_amount) real
+                )
+                (stmts
+                  (assign_stmt final_amount
+                    (call calculate_taxes
+                      (literal 75000.5
+                        (literal 20.5
+                          (literal 3)
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            }
+          }
+        )
+      )
+    }
+  }
+}

@@ -1,0 +1,96 @@
+Starting Compilation...
+
+(CODE
+  {procs
+    {proc Main
+      (gen_statements
+        (decls
+          {func int niggaedhbfdgdsman
+            (gen_statements
+              (var_def
+                (arg a1
+                  (arg a2)
+                ) int
+              )
+              (stmts
+                (assign_stmt a1 5)
+                (stmts
+                  (assign_stmt a2 4)
+                  (stmts
+                    (return 3)
+                  )
+                )
+              )
+            )
+          }
+          (decls
+            {proc niggaman
+              (arg_list
+                (arg a1
+                  (arg a2)
+                ) int
+              )
+              (stmts
+                (assign_stmt a1 5)
+                (stmts
+                  (assign_stmt a2 4)
+                )
+              )
+            }
+            (decls
+              (var_def
+                (arg a3
+                  (arg a4)
+                ) int
+              )
+              (var_def
+                (arg b5) real
+              )
+            )
+          )
+        )
+        (stmts
+          (call niggaman
+            (arg 3
+              (arg false)
+            )
+          )
+          (stmts
+            (if_stmt
+              (== a3 a4)
+              (stmts
+                (assign_stmt a3
+                  (* a4 a4)
+                )
+              )
+              (else
+                (stmts
+                  (assign_stmt b5 true)
+                  (stmts
+                    (assign_stmt a4 a3)
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    }
+  }
+)
+--- Semantic Analysis ---
+
+=== SCOPE: niggaedhbfdgdsman ===
+NAME            | TYPE            | KIND           
+--------------------------------------------------
+a2              | int             | var            
+a1              | int             | var            
+==========================
+
+=== SCOPE: niggaman ===
+NAME            | TYPE            | KIND           
+--------------------------------------------------
+a2              | int             | arg            
+a1              | int             | arg            
+==========================
+Semantic Error: Argument #2 of 'niggaman' expects type 'int', but got 'bool'!

@@ -36,7 +36,7 @@ void check_main_exists();
 %token EQUAL NOT_EQUAL GREATER GREATER_EQUAL LESS LESS_EQUAL 
 %token NOT ASSIGN DEREFERENCE ADDRESS_OF LENGTH_OP OR AND
 
-%type <ast_node> program funcs func proc arg_list args type type_literals args_literals
+%type <ast_node> program funcs func proc arg_list args type type_literals expr_list
 %type <ast_node> var_definition gen_stmts stmts stmt if_stmt while_stmt decls decl
 %type <ast_node> for_stmt for_body if_body assign_stmt expr inits updates
 
@@ -73,17 +73,15 @@ funcs: func funcs { $$ = mknode("funcs", $1, $2); }
 func: FUNC ID '(' arg_list ')' RETURN type '{' gen_stmts '}'{ $$ = mknode("func", mknode("", $7, mknode($2, NULL, NULL)), mknode("", $4, $9)); };
 proc: PROC ID '(' arg_list ')' '{' gen_stmts '}' { $$ = mknode("proc", mknode("", NULL, mknode($2, NULL, NULL)), mknode("", $4, $7)); };
 arg_list: args ':' type ';' arg_list { $$ = mknode("arg_list", mknode("", $1, $3), $5);}
-        | args ':' type             { $$ = mknode("arg_list", $1, $3); }
+        | args ':' type             { $$ = mknode("arg_list", mknode("", $1, $3),NULL); }
         |                  { $$ = NULL; };
 
 
 args: ID ',' args { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
     | ID { $$ = mknode("arg", mknode($1, NULL, NULL), NULL);};
 
-args_literals: ID ',' args_literals { $$ = mknode("arg", mknode($1, NULL, NULL), $3); }
-    | ID { $$ = mknode("arg", mknode($1,NULL,NULL), NULL);}
-    | type_literals { $$ = mknode("literal",$1, NULL);}
-    | type_literals ',' args_literals { $$ = mknode("literal", $1 ,$3); };
+expr_list: expr ',' expr_list { $$ = mknode("arg", $1, $3); }
+         | expr               { $$ = mknode("arg", $1, NULL); };
 
 type: INT         { $$ = mknode("int", NULL, NULL); }
     | REAL        { $$ = mknode("real", NULL, NULL); }
@@ -143,7 +141,7 @@ stmt: if_stmt  { $$ = $1; }
     | for_stmt { $$ = $1; }
     | assign_stmt {$$ = $1;}
     | while_stmt {$$ = $1;}
-    | ID '(' args_literals ')' ';' { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' expr_list ')' ';' { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
     | ID '(' ')' ';'  { $$ = mknode("call", mknode($1, NULL, NULL), NULL);}
     | RETURN expr ';' { $$ = mknode("return", $2, NULL); }
     | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); };
@@ -182,7 +180,7 @@ expr: expr OR expr         { $$ = mknode("||", $1, $3); }
     | NOT expr             { $$ = mknode("!", $2, NULL); }
     | type_literals        { $$ = $1; }
     | ID                   { $$ = mknode($1, NULL, NULL); }
-    | ID '(' args_literals ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' expr_list ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
     | ID '(' ')'                    { $$ = mknode("call", mknode($1, NULL, NULL), NULL); }
     | '(' expr ')'         { $$ = $2; }
     | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
@@ -201,7 +199,7 @@ inits: assign_stmt { $$ = $1; }
 #include "lex.yy.c"
 int main() {
     current_scope = NULL;
-    push_scope(); 
+    push_scope("Global"); 
     
     printf("Starting Compilation...\n");
     yyparse(); 
