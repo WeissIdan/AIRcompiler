@@ -1,0 +1,423 @@
+Starting Compilation...
+
+(CODE
+  {funcs
+    {func bool B1
+      (arg_list
+        (arg a
+          (arg b
+            (arg y)
+          )
+        ) int
+        (arg_list
+          (arg c) char
+        )
+      )
+      (gen_statements
+        (var_def
+          (arg res) bool
+        )
+        (stmts
+          (block
+            (gen_statements
+              (decls
+                (var_def
+                  (arg x
+                    (arg b)
+                  ) char
+                )
+                (var_def
+                  (arg y) int
+                )
+              )
+              (stmts
+                (assign_stmt b '&')
+                (stmts
+                  (assign_stmt a
+                    (-
+                      (/
+                        (* y 7) a
+                      ) y
+                    )
+                  )
+                  (stmts
+                    (assign_stmt
+                      (+ 3 6) 9
+                    )
+                  )
+                )
+              )
+            )
+          )
+          (stmts
+            (return res)
+          )
+        )
+      )
+    }
+    {procs
+      {proc B21
+        (arg_list
+          (arg i
+            (arg j
+              (arg k
+                (arg x)
+              )
+            )
+          ) int
+        )
+        (gen_statements
+          {func bool B31
+            (arg_list
+              (arg l
+                (arg m
+                  (arg n)
+                )
+              ) int
+            )
+            (gen_statements
+              (decls
+                (var_def
+                  (arg x
+                    (arg j)
+                  ) bool
+                )
+                (var_def
+                  (arg k) char
+                )
+              )
+              (stmts
+                (assign_stmt k '@')
+                (stmts
+                  (assign_stmt i
+                    (+ l l)
+                  )
+                  (stmts
+                    (if_stmt
+                      (||
+                        (== k '*')
+                        (&&
+                          (!= x false)
+                          (<
+                            (+ l m) i
+                          )
+                        )
+                      )
+                      (block
+                        (stmts
+                          (assign_stmt x
+                            (< l m)
+                          )
+                        )
+                      )
+                    )
+                    (stmts
+                      (return x)
+                    )
+                  )
+                )
+              )
+            )
+          }
+          (stmts
+            (block
+              (gen_statements
+                (decls
+                  (var_def
+                    (arg x) char
+                  )
+                  (var_def
+                    (arg k) bool
+                  )
+                )
+                (stmts
+                  (assign_stmt k
+                    (call B31
+                      (arg 5
+                        (arg i
+                          (arg j)
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+            (stmts
+              (assign_stmt x k)
+            )
+          )
+        )
+      }
+      {funcs
+        {func int B3
+          (arg_list
+            (arg i
+              (arg j
+                (arg k)
+              )
+            ) int
+          )
+          (gen_statements
+            (decls
+              {func int S2
+                (arg_list
+                  (arg t) int
+                )
+                (gen_statements
+                  (var_def
+                    (arg temp) int
+                  )
+                  (stmts
+                    (assign_stmt temp
+                      (* t t)
+                    )
+                    (stmts
+                      (return temp)
+                    )
+                  )
+                )
+              }
+              (decls
+                (var_def
+                  (arg total) int
+                )
+                (var_def
+                  (arg bo) bool
+                )
+              )
+            )
+            (stmts
+              (assign_stmt bo
+                (call B1
+                  (arg i
+                    (arg j
+                      (arg k
+                        (arg '^')
+                      )
+                    )
+                  )
+                )
+              )
+              (stmts
+                (assign_stmt total
+                  (call S2
+                    (arg
+                      (+
+                        (+ i j) k
+                      )
+                    )
+                  )
+                )
+                (stmts
+                  (return total)
+                )
+              )
+            )
+          )
+        }
+        {funcs
+          {func int B2
+            (gen_statements
+              (decls
+                (var_def
+                  (arg s1
+                    (arg s2)
+                  ) string[100]
+                )
+                (var_def
+                  (arg i
+                    (arg j
+                      (arg cnt)
+                    )
+                  ) int
+                )
+              )
+              (stmts
+                (assign_stmt i 0)
+                (stmts
+                  (assign_stmt j 0)
+                  (stmts
+                    (assign_stmt cnt 1)
+                    (stmts
+                      (while_stmt
+                        (< i
+                          (|length| s1)
+                        )
+                        (block
+                          (stmts
+                            (while_stmt
+                              (< j
+                                (/
+                                  (|length| s2) 2
+                                )
+                              )
+                              (block
+                                (stmts
+                                  (if_stmt
+                                    (==
+                                      (array_access s1 i)
+                                      (array_access s2 j)
+                                    )
+                                    (block
+                                      (stmts
+                                        (assign_stmt cnt
+                                          (* cnt 2)
+                                        )
+                                      )
+                                    )
+                                  )
+                                  (stmts
+                                    (assign_stmt j
+                                      (+ j 1)
+                                    )
+                                  )
+                                )
+                              )
+                            )
+                            (stmts
+                              (assign_stmt i
+                                (+ i 1)
+                              )
+                            )
+                          )
+                        )
+                      )
+                      (stmts
+                        (return cnt)
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          }
+          {funcs
+            {func int B4
+              (gen_statements
+                (decls
+                  (var_def
+                    (arg x) int
+                  )
+                  (var_def
+                    (arg y) int*
+                  )
+                )
+                (stmts
+                  (assign_stmt x 5)
+                  (stmts
+                    (assign_stmt y
+                      (& x)
+                    )
+                    (stmts
+                      (assign_stmt x 6)
+                      (stmts
+                        (if_stmt
+                          (&&
+                            (==
+                              (& x) y
+                            )
+                            (==
+                              (^ y) x
+                            )
+                          )
+                          (block
+                            (stmts
+                              (assign_stmt
+                                (^ y) 19
+                              )
+                            )
+                          )
+                        )
+                        (stmts
+                          (block
+                            (gen_statements
+                              (decls
+                                (var_def
+                                  (arg x) char*
+                                )
+                                (decls
+                                  (var_def
+                                    (arg y) string[10]
+                                  )
+                                  (var_def
+                                    (arg z) char
+                                  )
+                                )
+                              )
+                              (stmts
+                                (assign_stmt y "tuktuk")
+                                (stmts
+                                  (assign_stmt x
+                                    (&
+                                      (array_access y 5)
+                                    )
+                                  )
+                                  (stmts
+                                    (assign_stmt z
+                                      (^
+                                        (- x 5)
+                                      )
+                                    )
+                                    (stmts
+                                      (assign_stmt y "barbar")
+                                      (stmts
+                                        (block
+                                          (decls
+                                            (var_def
+                                              (arg x) char
+                                            )
+                                            (decls
+                                              (var_def
+                                                (arg y) int*
+                                              )
+                                              (decls
+                                                (var_def
+                                                  (arg z) char*
+                                                )
+                                                (var_def
+                                                  (arg g) char
+                                                )
+                                              )
+                                            )
+                                          )
+                                        )
+                                      )
+                                    )
+                                  )
+                                )
+                              )
+                            )
+                          )
+                          (stmts
+                            (return 0)
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            }
+            {procs
+              {proc Main
+                (gen_statements
+                  (var_def
+                    (arg b52) int
+                  )
+                  (stmts
+                    (assign_stmt b52
+                      (call B2)
+                    )
+                  )
+                )
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+)
+--- Semantic Analysis ---
+Semantic Error: Left side of assignment must be a variable, pointer, or array cell!

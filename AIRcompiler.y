@@ -107,7 +107,11 @@ type_literals: INT_LITERAL {
                  sprintf(buffer, "%g", $1);
                  $$ = mknode(buffer, NULL, NULL);
              }
-             | STRING_LITERAL { $$ = mknode($1, NULL, NULL); }
+             | STRING_LITERAL { 
+                 char buffer[256];
+                 sprintf(buffer, "\"%s\"", $1);
+                 $$ = mknode(buffer, NULL, NULL); 
+             }
              | CHAR_LITERAL { 
                  char buffer[4];
                  sprintf(buffer, "'%c'", $1);
@@ -144,7 +148,8 @@ stmt: if_stmt  { $$ = $1; }
     | ID '(' expr_list ')' ';' { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
     | ID '(' ')' ';'  { $$ = mknode("call", mknode($1, NULL, NULL), NULL);}
     | RETURN expr ';' { $$ = mknode("return", $2, NULL); }
-    | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); };
+    | RETURN ';'      { $$ = mknode("return", mknode("NONE", NULL, NULL), NULL); }
+    | '{' gen_stmts '}' { $$ = mknode("block", $2, NULL); };
 
 if_stmt: IF '(' expr ')' if_body %prec LOWER_THAN_ELSE { $$ = mknode("if_stmt", $3, mknode("", $5, NULL)); }
        | IF '(' expr ')' if_body ELSE if_body { $$ = mknode("if_stmt", mknode("",$3,$5), mknode("else", $7, NULL)); };
@@ -160,10 +165,11 @@ for_body: stmt          { $$ = $1; }
 if_body: stmt          { $$ = $1; }
        | '{' gen_stmts '}' { $$ = $2; };
 
-assign_stmt: ID ASSIGN expr ';' {$$ = mknode("assign_stmt", mknode($1, NULL, NULL), $3);};
+assign_stmt: expr ASSIGN expr ';' { $$ = mknode("assign_stmt", $1, $3); };
 
-updates: ID ASSIGN expr { $$ = mknode("assign_stmt", mknode($1, NULL, NULL), $3); } 
+updates: expr ASSIGN expr { $$ = mknode("assign_stmt", $1, $3); } 
        | { $$ = NULL; };
+
 
 expr: expr OR expr         { $$ = mknode("||", $1, $3); }
     | expr AND expr        { $$ = mknode("&&", $1, $3); }
@@ -180,8 +186,9 @@ expr: expr OR expr         { $$ = mknode("||", $1, $3); }
     | NOT expr             { $$ = mknode("!", $2, NULL); }
     | type_literals        { $$ = $1; }
     | ID                   { $$ = mknode($1, NULL, NULL); }
-    | ID '(' expr_list ')'      { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
-    | ID '(' ')'                    { $$ = mknode("call", mknode($1, NULL, NULL), NULL); }
+    | ID '(' expr_list ')' { $$ = mknode("call", mknode($1, NULL, NULL), $3); }
+    | ID '(' ')'           { $$ = mknode("call", mknode($1, NULL, NULL), NULL); }
+    | ID '[' expr ']'      { $$ = mknode("array_access", mknode($1, NULL, NULL), $3); } /* <--- NEW: Array Indexing! */
     | '(' expr ')'         { $$ = $2; }
     | DEREFERENCE expr     { $$ = mknode("^", $2, NULL); }
     | ADDRESS_OF expr      { $$ = mknode("&", $2, NULL); }

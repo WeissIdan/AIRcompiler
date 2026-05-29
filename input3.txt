@@ -7,14 +7,14 @@ var res : bool;
 var x, b : char;
 var y: int;
 b = '&';
- a = x; 
+/%1 a = x; %/
 /%2 b = 8; %/
 a = (y * 7)/a-y;
 /%3 a = (y * 7)/b-y; %/
 /%4 a = (y * 7)/a-c; %/
 /%5 res = (b == c) && (y > a); %/
 /%6 res = (b == c) && (y + a); %/
-/%7 3 + 6 = 9; %/
+ 3 + 6 = 9;
 /%8 ^x = 6; %/
 }
  return res ;

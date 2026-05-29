@@ -155,7 +155,34 @@ char* get_expr_type(node* expr) {
         char* right_type = get_expr_type(expr->right);
         return check_logic_op(expr->token, left_type, right_type);
     }
-    
+    if (strcmp(expr->token, "array_access") == 0) {
+        Symbol* sym = lookup_symbol(expr->left->token);
+        if (sym == NULL) {
+            printf("Semantic Error: Array '%s' is used before it is defined!\n", expr->left->token);
+            exit(1);
+        }
+        
+        if (strstr(sym->type, "string") == NULL) {
+            printf("Semantic Error: Operator [] can only be used on strings! Got type '%s'\n", sym->type);
+            exit(1);
+        }
+        
+        char* index_type = get_expr_type(expr->right);
+        if (strcmp(index_type, "int") != 0) {
+            printf("Semantic Error: Array index must be an 'int', but got '%s'!\n", index_type);
+            exit(1);
+        }
+        
+        return "char"; 
+    }
+    if (strcmp(expr->token, "|length|") == 0) {
+        char* child_type = get_expr_type(expr->left);
+        if (strstr(child_type, "string") == NULL) {
+            printf("Semantic Error: Length operator || can only be used on strings! Got type '%s'\n", child_type);
+            exit(1); 
+        }
+        return "int";
+    }
     /* Logical NOT (!) */
     if (strcmp(expr->token, "!") == 0) {
         char* child_type = get_expr_type(expr->left); 
@@ -165,32 +192,31 @@ char* get_expr_type(node* expr) {
         }
         return "bool";
     }
+    /* --- RULE 18: ADDRESS OF (&) --- */
     if (strcmp(expr->token, "&") == 0) {
-        node* operand = expr->left;
-
-        /* Must be a simple variable*/
-        if (operand == NULL || operand->left != NULL || operand->right != NULL) {
-            printf("Semantic Error: '&' can only be applied to a variable, not a complex expression!\n");
-            exit(1);
+        
+        /* Rule 18: Must be a variable OR an array access! */
+        int is_plain_var = (expr->left->left == NULL && expr->left->right == NULL);
+        int is_array = (strcmp(expr->left->token, "array_access") == 0);
+        
+        if (!is_plain_var && !is_array) {
+            printf("Semantic Error: '&' can only be applied to a variable or array cell!\n");
+            exit(1); /* HARD STOP */
         }
 
-        /* Look up the variable's type */
-        Symbol* sym = lookup_symbol(operand->token);
-        if (sym == NULL) {
-            printf("Semantic Error: Variable '%s' is not defined!\n", operand->token);
-            exit(1);
+        char* child_type = get_expr_type(expr->left);
+        
+        /* Can only be used on standard types, not existing pointers */
+        if (strcmp(child_type, "int") != 0 && strcmp(child_type, "real") != 0 &&
+            strcmp(child_type, "char") != 0 && strstr(child_type, "string") == NULL) {
+            printf("Semantic Error: Operator '&' requires int, real, char, or string. Got '%s'!\n", child_type);
+            exit(1); /* HARD STOP */
         }
-
-        char* var_type = sym->type;
-
-        /* Valid types: int, real, char, string[N] */
-        if (strcmp(var_type, "int") == 0)  return "int*";
-        if (strcmp(var_type, "real") == 0) return "real*";
-        if (strcmp(var_type, "char") == 0) return "char*";
-        if (strstr(var_type, "string") != NULL) return "char*";
-
-        printf("Semantic Error: '&' can only be applied to 'int', 'real', 'char', or 'string[N]', but got '%s'!\n", var_type);
-        exit(1);
+        
+        /* Return the pointer type (e.g., "int" -> "int*") */
+        char* ptr_type = (char*)malloc(strlen(child_type) + 2);
+        sprintf(ptr_type, "%s*", child_type);
+        return ptr_type;
     }
 
 
@@ -378,7 +404,8 @@ void build_table(node* tree) {
         else if (strcmp(tree->token, "if_stmt") == 0 || 
                  strcmp(tree->token, "while_stmt") == 0 || 
                  strcmp(tree->token, "for") == 0 ||
-                 strcmp(tree->token, "else") == 0) {
+                 strcmp(tree->token, "else") == 0 ||
+                 strcmp(tree->token, "block") == 0){
             
             if (strcmp(tree->token, "if_stmt") == 0 || strcmp(tree->token, "while_stmt") == 0) {
                 char* cond_type;
@@ -408,30 +435,54 @@ void build_table(node* tree) {
             return; 
         }
         /*assignment*/
+        /* --- 6. HANDLE ASSIGNMENTS (Rules 10 & 15) --- */
+        /* --- 6. HANDLE ASSIGNMENTS (Rules 10 & 15) --- */
         else if (strcmp(tree->token, "assign_stmt") == 0) {
-            char* var_name = tree->left->token;
-            Symbol* sym = lookup_symbol(var_name);
             
-            if (sym == NULL) {
-                printf("Semantic Error: Variable '%s' is used before it is defined!\n", var_name);
-                exit(1);
+            /* --- NEW: L-VALUE CHECK --- */
+            node* l_node = tree->left;
+            int is_lvalue = 0;
+            
+            /* It is a valid memory location if it is a pointer or array... */
+            if (strcmp(l_node->token, "^") == 0 || strcmp(l_node->token, "array_access") == 0) {
+                is_lvalue = 1;
+            } 
+            /* ...or if it is a plain variable name! */
+            else if (l_node->left == NULL && l_node->right == NULL) {
+                char f = l_node->token[0];
+                if ((f >= 'a' && f <= 'z') || (f >= 'A' && f <= 'Z')) {
+                    if (strcmp(l_node->token, "true") != 0 && strcmp(l_node->token, "false") != 0 && strcmp(l_node->token, "null") != 0) {
+                        is_lvalue = 1;
+                    }
+                }
             }
             
+            if (!is_lvalue) {
+                printf("Semantic Error: Left side of assignment must be a variable, pointer, or array cell!\n");
+                exit(1); /* HARD STOP */
+            }
+            /* --------------------------- */
+
+            char* left_type = get_expr_type(tree->left);
             char* right_type = get_expr_type(tree->right);
             
+            /* Rule 15 Special Case: 'null' can only be assigned to pointers */
             if (strcmp(right_type, "null") == 0) {
-                if (strstr(sym->type, "*") == NULL) {
-                    printf("Semantic Error: Cannot assign 'null' to non-pointer variable '%s'!\n", var_name);
+                if (strstr(left_type, "*") == NULL) {
+                    printf("Semantic Error: Cannot assign 'null' to a non-pointer!\n");
                     exit(1);
                 }
             } 
-            else if (strcmp(sym->type, right_type) != 0) {
-                int is_valid_cast = (strcmp(sym->type, "real") == 0 && strcmp(right_type, "int") == 0);
-                if(!is_valid_cast){
-                printf("Semantic Error: Cannot assign type '%s' to variable '%s' (which is type '%s')!\n", 
-                       right_type, var_name, sym->type);
-                exit(1); 
-            }
+            else if (strcmp(left_type, right_type) != 0) {
+                
+                int is_valid_cast = (strcmp(left_type, "real") == 0 && strcmp(right_type, "int") == 0);
+                
+                int is_string_assign = (strstr(left_type, "string") != NULL && strcmp(right_type, "string") == 0);
+                
+                if (!is_valid_cast && !is_string_assign) {
+                    printf("Semantic Error: Cannot assign type '%s' to type '%s'!\n", right_type, left_type);
+                    exit(1);
+                }
             }
             
             build_table(tree->right);

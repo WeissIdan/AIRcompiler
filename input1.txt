@@ -7,7 +7,7 @@ var res : bool;
 var x, b : char;
 var y: int;
 b = '&';
- a = x; 
+/%1 a = x; %/
 /%2 b = 8; %/
 a = (y * 7)/a-y;
 /%3 a = (y * 7)/b-y; %/
