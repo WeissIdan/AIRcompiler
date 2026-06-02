@@ -6,6 +6,7 @@
 #include "symtable.h"
 #include "symtable.c"
 #include "semantic.c"
+#include "threeAdressGen.c"
 
 extern int yylineno; 
 extern char* yytext;
@@ -62,6 +63,8 @@ program: funcs { node* root = mknode("CODE", $1, NULL);
     /* Build the Symbol Table */
     printf("--- Semantic Analysis ---\n");
     build_table(root);
+    printf("\n--- 3AC Generation ---\n");
+    generate_3ac(root);
     };
 
 funcs: func funcs { $$ = mknode("funcs", $1, $2); }
@@ -212,6 +215,7 @@ int main() {
     yyparse(); 
     print_scope();
     check_main_exists();
+    
     return 0;
 }
 
